@@ -49,12 +49,13 @@ class EtspiAuthRequestHandler(http.server.BaseHTTPRequestHandler):
                     d_token = ctx.auth_helper.get_access_token()
                     
                     ctx.log("Successfully obtained access tokens")
+                    ctx.token = d_token['access_token']
+                    ctx.refresh_token = d_token['refresh_token']
+                    ctx.expiry = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=d_token["expires_in"])
+
                     if not ctx.options["token-hidden"]:
-                        ctx.token = d_token['access_token']
                         ctx.log(f"access_token: {d_token['access_token']}")
-                        ctx.refresh_token = d_token['refresh_token']
-                        ctx.log(f"refresh_token: {d_token['refresh_token']}")                    
-                        ctx.expiry = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=d_token["expires_in"])
+                        ctx.log(f"refresh_token: {d_token['refresh_token']}")
                         ctx.log("expiry: {}".format(ctx.expiry.strftime("%Y-%m-%d %H:%M:%S")))
 
                     if ctx.options["token-file"]:
