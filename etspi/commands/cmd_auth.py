@@ -128,11 +128,11 @@ def get_auth_directions(ctx: Any, auth_hlp: AuthHelper, rdr_url: str, scope_list
 @click.option("-h", "--host", required=True, default="localhost", type=click.STRING, help="Callback server host name or ip.")
 @click.option("-p", "--port", required=True, default=10443, type=click.INT, help="Callback server port number.")
 @click.option("-c", "--certfile", required=True, 
-              type=click.Path(exists=True, file_okay=True, resolve_path=True),
+              type=click.Path(exists=True, file_okay=True, directory_okay=False, resolve_path=True),
               default=os.path.join(os.path.expanduser('~'), ".etspi\\cert.pem"),
               help="Callback server SSL certificate file location.")
 @click.option("-k", "--keyfile", required=True, 
-              type=click.Path(exists=True, file_okay=True, resolve_path=True), 
+              type=click.Path(exists=True, file_okay=True, directory_okay=False, resolve_path=True), 
               default=os.path.join(os.path.expanduser('~'), ".etspi\\key.pem"), 
               help="Callback server SSL key file location.")
 @click.option("-s", "--scope", multiple=True, default=["all"],
