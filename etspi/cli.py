@@ -16,7 +16,6 @@ __version__ = "1.0.1"
 class Environment:
     def __init__(self):
         self.verbose = False
-        self.home = os.getcwd()
         self.etsy = None
         self.auth_helper = None
         self.options = {}
@@ -99,7 +98,7 @@ class EtspiCLI(click.Group):
         try:
             mod = __import__(f"etspi.commands.cmd_{name}", None, None, ["cli"])
         except ImportError as ex:
-            click.echo(f"Failed to load commnad module - {ex.msg}", file=sys.stderr)
+            click.echo(f"Failed to load command module - {ex.msg}", file=sys.stderr)
             return
         return mod.cli
 
@@ -121,7 +120,6 @@ pass_environment = click.make_pass_decorator(Environment, ensure=True)
 cmd_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), "commands"))
 
 @click.command(cls=EtspiCLI, context_settings=CONTEXT_SETTINGS)
-@click.option("--home", type=click.Path(exists=True, file_okay=False, resolve_path=True), help="Set a directory for input and output commnads.")
 @click.option("-T", "--token", required=False, help="API access token obtained with the AUTH command.")
 @click.option("-RT", "--refresh-token", required=False, help="API refresh token obtained with the AUTH command.")
 @click.option("-K", "--key", required=False, help="API access key issued by Etsy.")
@@ -130,12 +128,10 @@ cmd_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), "commands")
 @click.option("-v", "--verbose", is_flag=True, help="Enables verbose output mode.")
 @pass_environment
 @click.pass_context
-def cli(root: Any, ctx: Any, home: Any, token: Any, refresh_token: Any, key: Any, expiry: Any, no_persist: bool, verbose: Any) -> None:
+def cli(root: Any, ctx: Any, token: Any, refresh_token: Any, key: Any, expiry: Any, no_persist: bool, verbose: Any) -> None:
     """Command line app to interact with Etsy V3 API for shop management."""
     ctx.verbose = verbose
     ctx.set_auth_params(token, refresh_token, key, expiry)
-    if home is not None:
-        ctx.home = home
     if no_persist:
         ctx.options["no-persist"] = True
     if ctx.verbose:

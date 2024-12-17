@@ -1,6 +1,3 @@
-import datetime
-import os
-import time
 import json
 import click
 
@@ -12,7 +9,7 @@ from etspi.cli import pass_environment, Environment
 from etsyv3 import EtsyAPI, Includes
 from etsyv3.models import CreateDraftListingRequest
 
-def draft_listing(ctx: Any, shop_id: str, src_file: Any, query: str, silent: bool) -> None:
+def draft_listing(ctx: Any, shop_id: str, src_file: Any, silent: bool) -> None:
     pld = json.load(src_file)
     etsy = ctx.get_etsy("DRAFT")
     if "type" in pld:
@@ -30,12 +27,12 @@ def draft_listing(ctx: Any, shop_id: str, src_file: Any, query: str, silent: boo
               type=click.File(mode="r", encoding="utf-8", errors="strict", lazy=None, atomic=False))
 @click.option("-S", "--silent", required=False, default=False, is_flag=True, help="Supress console output")
 @pass_environment
-def cli(ctx, shop_id, src_file, query, silent):
+def cli(ctx, shop_id, src_file, silent):
     """Create a new listing draft."""
     ctx.check_auth("DRAFT")
     if not shop_id is None and not src_file is None:
         ctx.vlog(f"Create draft listing: {shop_id} from {src_file}")
     try:
-        draft_listing(ctx, shop_id, src_file, query, silent)
+        draft_listing(ctx, shop_id, src_file, silent)
     except Exception as ex:
         ctx.log(f"Error processing command - {ex}")
