@@ -2,6 +2,7 @@ import os
 import sys
 import datetime
 
+from etsyv3 import EtsyAPI
 from typing import Any, Dict, List, Optional
 from rich.console import Console
 from rich.table import Table
@@ -15,7 +16,7 @@ __version__ = "1.0.1"
 class Environment:
     def __init__(self):
         self.verbose = False
-        self.home = os.getcwd()
+        self.etsy = None
         self.auth_helper = None
         self.options = {}
 
@@ -23,14 +24,34 @@ class Environment:
         self.keystring = key
         self.token = token
         self.refresh_token = refresh_token
-        self.expiry = expiry
+        epoch_time = datetime.datetime.fromtimestamp(int(expiry))
+        self.expiry = epoch_time
 
     def get_auth_params_asdic(self) -> Dict[str, str]:
-        return {"token": self.token, "refresh_token": self.refresh_token, "key": self.keystring, "expiry": self.expiry}
+        epoch_time = str(int(self.expiry.timestamp()))
+        return {"token": self.token, "refresh_token": self.refresh_token, "key": self.keystring, "expiry": epoch_time}
 
     def check_auth(self, argument: str) -> None:
         if not self.keystring or not self.token or not self.refresh_token or not self.expiry:
             raise click.BadArgumentUsage(f"{argument} argument is missing required authentication parameters")
+        
+    def get_etsy(self, argument: str) -> EtsyAPI:
+        self.check_auth(argument=argument)
+        if self.etsy is None:
+            persist_clbck = self.save_tokens_refresh if not "no-persist" in self.options else None
+            self.etsy = EtsyAPI(self.keystring, self.token, self.refresh_token, self.expiry, persist_clbck)
+        return self.etsy
+
+    def save_tokens_refresh(self, access_token: str, refresh_token: str, expires_at: datetime) -> None:
+        self.vlog("Updating auth.env file with refreshed token data")
+        self.token = access_token
+        self.refresh_token = refresh_token
+        self.expiry = expires_at
+        Environment.save_auth_config(self.get_auth_params_asdic())
+        self.vlog(f"access_token: {access_token}")
+        self.vlog(f"refresh_token: {refresh_token}")
+        self.vlog("expiry: {}".format(expires_at.strftime("%Y-%m-%d %H:%M:%S")))
+        return
 
     def log(self, msg: str, *args: list) -> None:
         if args:
@@ -77,7 +98,7 @@ class EtspiCLI(click.Group):
         try:
             mod = __import__(f"etspi.commands.cmd_{name}", None, None, ["cli"])
         except ImportError as ex:
-            click.echo(f"Failed to load commnad module - {ex.msg}", file=sys.stderr)
+            click.echo(f"Failed to load command module - {ex.msg}", file=sys.stderr)
             return
         return mod.cli
 
@@ -99,19 +120,19 @@ pass_environment = click.make_pass_decorator(Environment, ensure=True)
 cmd_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), "commands"))
 
 @click.command(cls=EtspiCLI, context_settings=CONTEXT_SETTINGS)
-@click.option("--home", type=click.Path(exists=True, file_okay=False, resolve_path=True), help="Set a directory for input and output commnads.")
 @click.option("-T", "--token", required=False, help="API access token obtained with the AUTH command.")
 @click.option("-RT", "--refresh-token", required=False, help="API refresh token obtained with the AUTH command.")
 @click.option("-K", "--key", required=False, help="API access key issued by Etsy.")
 @click.option("-E", "--expiry", required=False, help="API access token future expiration timestamp.")
+@click.option("-nP", "--no-persist", is_flag=True, default=False, help="Do not update auth.env file when tokens are refreshed. By default, if the file exists, new tokens are automatically saved.")
 @click.option("-v", "--verbose", is_flag=True, help="Enables verbose output mode.")
 @pass_environment
 @click.pass_context
-def cli(root: Any, ctx: Any, verbose: Any, home: Any, token: Any, refresh_token: Any, key: Any, expiry: Any) -> None:
+def cli(root: Any, ctx: Any, token: Any, refresh_token: Any, key: Any, expiry: Any, no_persist: bool, verbose: Any) -> None:
     """Command line app to interact with Etsy V3 API for shop management."""
     ctx.verbose = verbose
     ctx.set_auth_params(token, refresh_token, key, expiry)
-    if home is not None:
-        ctx.home = home
+    if no_persist:
+        ctx.options["no-persist"] = True
     if ctx.verbose:
         show_auth_params(root, ctx)

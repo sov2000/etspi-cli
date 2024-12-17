@@ -49,12 +49,13 @@ class EtspiAuthRequestHandler(http.server.BaseHTTPRequestHandler):
                     d_token = ctx.auth_helper.get_access_token()
                     
                     ctx.log("Successfully obtained access tokens")
+                    ctx.token = d_token['access_token']
+                    ctx.refresh_token = d_token['refresh_token']
+                    ctx.expiry = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=d_token["expires_in"])
+
                     if not ctx.options["token-hidden"]:
-                        ctx.token = d_token['access_token']
                         ctx.log(f"access_token: {d_token['access_token']}")
-                        ctx.refresh_token = d_token['refresh_token']
-                        ctx.log(f"refresh_token: {d_token['refresh_token']}")                    
-                        ctx.expiry = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(seconds=d_token["expires_in"])
+                        ctx.log(f"refresh_token: {d_token['refresh_token']}")
                         ctx.log("expiry: {}".format(ctx.expiry.strftime("%Y-%m-%d %H:%M:%S")))
 
                     if ctx.options["token-file"]:
@@ -127,11 +128,11 @@ def get_auth_directions(ctx: Any, auth_hlp: AuthHelper, rdr_url: str, scope_list
 @click.option("-h", "--host", required=True, default="localhost", type=click.STRING, help="Callback server host name or ip.")
 @click.option("-p", "--port", required=True, default=10443, type=click.INT, help="Callback server port number.")
 @click.option("-c", "--certfile", required=True, 
-              type=click.Path(exists=True, file_okay=True, resolve_path=True),
+              type=click.Path(exists=True, file_okay=True, dir_okay=False, resolve_path=True),
               default=os.path.join(os.path.expanduser('~'), ".etspi\\cert.pem"),
               help="Callback server SSL certificate file location.")
 @click.option("-k", "--keyfile", required=True, 
-              type=click.Path(exists=True, file_okay=True, resolve_path=True), 
+              type=click.Path(exists=True, file_okay=True, dir_okay=False, resolve_path=True), 
               default=os.path.join(os.path.expanduser('~'), ".etspi\\key.pem"), 
               help="Callback server SSL key file location.")
 @click.option("-s", "--scope", multiple=True, default=["all"],

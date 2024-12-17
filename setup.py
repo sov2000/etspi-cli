@@ -19,10 +19,10 @@ setup(
         "console_scripts": ['etspi = etspi.cli:cli']
         },
     version = version,
-    description = "Command line app to interact with Etsy V3 API for shop management.",
+    description = "CLI app to interact with Etsy V3 API for shop management.",
     long_description = long_descr,
-    author = "Stas Ovcharenko",
-    author_email = "stasovcharenko@gmail.com",
+    author = "sov2000",
+    author_email = "sov2000@yahoo.com",
     url = "https://github.com/sov2000/etspi-cli",
     keywords = ["etsy", "api", "shop", "manager"],
     platforms = ["POSIX", "Windows"],
