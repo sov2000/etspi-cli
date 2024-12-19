@@ -18,13 +18,17 @@ class Environment:
         self.verbose = False
         self.etsy = None
         self.auth_helper = None
+        self.keystring = None
+        self.token = None
+        self.refresh_token = None
+        self.expiry = None
         self.options = {}
 
     def set_auth_params(self, token: str, refresh_token: str, key: str, expiry: str) -> None:
         self.keystring = key
         self.token = token
         self.refresh_token = refresh_token
-        epoch_time = datetime.datetime.fromtimestamp(int(expiry))
+        epoch_time = datetime.datetime.fromtimestamp(int(expiry)) if expiry else None
         self.expiry = epoch_time
 
     def get_auth_params_asdic(self) -> Dict[str, str]:
@@ -102,6 +106,12 @@ class EtspiCLI(click.Group):
             return
         return mod.cli
 
+def create_etspi_home():
+    user_home = os.path.expanduser('~')
+    directory_path = os.path.join(user_home, ".etspi")
+    if not os.path.exists(directory_path):
+        os.makedirs(directory_path)
+
 def show_auth_params(root: click.Context, ctx: Any) -> None:
     console = Console()
     table = Table(title="Auth Parameters")
@@ -130,8 +140,10 @@ cmd_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), "commands")
 @click.pass_context
 def cli(root: Any, ctx: Any, token: Any, refresh_token: Any, key: Any, expiry: Any, no_persist: bool, verbose: Any) -> None:
     """Command line app to interact with Etsy V3 API for shop management."""
+    create_etspi_home()
     ctx.verbose = verbose
     ctx.set_auth_params(token, refresh_token, key, expiry)
+    #ctx.check_auth("Default")
     if no_persist:
         ctx.options["no-persist"] = True
     if ctx.verbose:

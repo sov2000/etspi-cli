@@ -29,7 +29,7 @@ def get_listing(ctx: Any, id: str, includes: List, transform: str, query: str, o
 @click.option("-i", "--id", required=True, type=click.INT, help="Listing ID to which apply action.")
 @click.option("-in", "--include", type=click.Choice([Includes.SHIPPING.value, Includes.IMAGES.value, Includes.SHOP.value, Includes.USER.value, Includes.TRANSLATIONS.value, Includes.INVENTORY.value, Includes.VIDEOS.value], case_sensitive=False), multiple=True)
 #@click.option("-t", "--transform", is_flag=True, default=False, help="Transform listing response into format suitable for create or update request.")
-@click.option("--format-draft", "transform", flag_value="draft", default=True, help="Transform listing response into format suitable for listing draft request.")
+@click.option("--format-draft", "transform", flag_value="draft", default=False, help="Transform listing response into format suitable for listing draft request.")
 @click.option("--format-update", "transform", flag_value="update", default=False, help="Transform listing response into format suitable for listing update request.")
 @click.option("-q", "--query", type=click.STRING, help="JMESPath query to filter the output of the command.")
 @click.option("-o", "--out", required=False, type=click.File(mode="w", encoding="utf-8", errors="strict", lazy=None, atomic=False), help="Also output result into a file")
