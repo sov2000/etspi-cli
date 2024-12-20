@@ -38,7 +38,7 @@ setup(
         "Environment :: Console",
         "Intended Audience :: End Users/Desktop",
         "Topic :: Office/Business",
-        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Intended Audience :: Other Audience",
         "Environment :: Console",
         ]

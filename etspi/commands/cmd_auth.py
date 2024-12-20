@@ -14,7 +14,7 @@ from rich import print
 from rich.console import Console
 from rich.panel import Panel
 from etspi.cli import pass_environment, Environment
-from etsyv3.util.auth import AuthHelper
+from etspi.etsyv3.util.auth import AuthHelper
 
 HTTPD_ACTIVE = True
 

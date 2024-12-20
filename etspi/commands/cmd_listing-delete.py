@@ -3,7 +3,7 @@ import click
 from typing import Any, Dict, List, Optional
 from rich import print
 from etspi.cli import pass_environment, Environment
-from etsyv3 import EtsyAPI, Includes
+from etspi.etsyv3 import EtsyAPI, Includes
 
 def delete_listing(ctx: Any, id: str, yes: bool, silent: bool) -> None:
     ctx.vlog(f"Delete Action for Listing ID: {id}")

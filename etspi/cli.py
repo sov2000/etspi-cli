@@ -2,7 +2,7 @@ import os
 import sys
 import datetime
 
-from etsyv3 import EtsyAPI
+from etspi.etsyv3 import EtsyAPI
 from typing import Any, Dict, List, Optional
 from rich.console import Console
 from rich.table import Table

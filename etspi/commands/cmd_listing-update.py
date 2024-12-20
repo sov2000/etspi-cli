@@ -4,8 +4,8 @@ import click
 from typing import Any, Dict, List, Optional
 from rich import print
 from etspi.cli import pass_environment, Environment
-from etsyv3 import EtsyAPI, Includes
-from etsyv3.models import UpdateListingRequest
+from etspi.etsyv3 import EtsyAPI, Includes
+from etspi.etsyv3.models import UpdateListingRequest
 
 def update_listing(ctx: Any, id: str, shop_id: str, src_file: Any, silent: bool) -> None:
     ctx.vlog(f"Update Action for Listing ID: {id}")
