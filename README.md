@@ -21,7 +21,7 @@ provided by Etsy and allows viewing and managing the shop and the listings direc
 The recommended installation method is via `pipx`. Refer to the official `pipx` documentation ([link to pipx doc site](https://pipx.pypa.io/stable/)) for installation and usage instructions.
 
 ```bash
-pipx install etspi-1.0.1
+pipx install etspi
 ```
 If you plan to use Etspi to obtain API tokens, you will also need to have `openssl` installed or some other means to generate certificates suitable for SSL/TLS to secure HTTP server. Alternatively, you can use dedicated tools like Postman to obtain tokens manually. However, Etspi offers a more convenient approach, and you only need to do this once if you persist the tokens. Etspi will automatically use persited refresh token to get a fresh API token when necessary.
 

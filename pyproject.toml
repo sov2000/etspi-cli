@@ -20,12 +20,11 @@ classifiers = [
         "Environment :: Console",
         "Intended Audience :: End Users/Desktop",
         "Topic :: Office/Business",
-        "License :: OSI Approved :: MIT License",
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Intended Audience :: Other Audience",
         "Environment :: Console",
         ]
 exclude = ["test_files/", "etspi-run.py"]
-
 
 [tool.poetry.dependencies]
 python = "^3.12"
@@ -34,7 +33,13 @@ rich = "^13.9.4"
 jmespath = "^1.0.1"
 setuptools = "^75.6.0"
 python-dotenv = "^1.0.1"
-etsyv3 = {git = "https://github.com/sov2000/etsyv3.git", rev = "etspi-cli-beta"}
+certifi = "^2024.12.14"
+charset-normalizer = "^3.4.0"
+idna = "^3.10"
+oauthlib = "^3.2.2"
+requests = "^2.32.3"
+requests-oauthlib = "^2.0.0"
+urllib3 = "^2.2.3"
 
 [tool.poetry.scripts]
 etspi = 'etspi.cli:cli'

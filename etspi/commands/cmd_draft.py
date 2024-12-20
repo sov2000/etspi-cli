@@ -6,8 +6,8 @@ from rich import print
 from rich.console import Console
 from rich.panel import Panel
 from etspi.cli import pass_environment, Environment
-from etsyv3 import EtsyAPI, Includes
-from etsyv3.models import CreateDraftListingRequest
+from etspi.etsyv3 import EtsyAPI, Includes
+from etspi.etsyv3.models import CreateDraftListingRequest
 
 def draft_listing(ctx: Any, shop_id: str, src_file: Any, silent: bool) -> None:
     pld = json.load(src_file)
