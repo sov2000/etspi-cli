@@ -811,7 +811,8 @@ class EtsyAPI:
         return self._issue_request(uri)
 
     def get_authenticated_user(self) -> Any:
-        uri = f"{ETSY_API_BASEURL}/users/{self.user_id}"
+        # uri = f"{ETSY_API_BASEURL}/users/{self.user_id}"
+        uri = f"{ETSY_API_BASEURL}/users/me"
         return self._issue_request(uri)
 
     def delete_user_address(self) -> Any:

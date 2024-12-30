@@ -7,7 +7,7 @@ from rich import print
 from etspi.cli import pass_environment, Environment
 from etspi.etsyv3 import EtsyAPI
 
-def get_listing_image(ctx: Any, id: str, img_id: str, query: str, out: Any, silent: bool) -> None:
+def get_listing_image(ctx: Any, id: int, img_id: int, query: str, out: Any, silent: bool) -> None:
     ctx.vlog(f"Get Image Action for Listing ID: {id} Image ID: {img_id}")
     etsy = ctx.get_etsy("LISTING-GET")
     if img_id > 0:

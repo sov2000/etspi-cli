@@ -8,7 +8,7 @@ from etspi.cli import pass_environment, Environment
 from etspi.etsyv3 import EtsyAPI, Includes
 from etspi.etsyv3.models import UpdateListingInventoryRequest
 
-def get_listing_inventory(ctx: Any, id: str, transform: str, query: str, out: Any, silent: bool) -> None:
+def get_listing_inventory(ctx: Any, id: int, transform: str, query: str, out: Any, silent: bool) -> None:
     ctx.vlog(f"Get Inventroy Action for Listing ID: {id}")
     etsy = ctx.get_etsy("LISTING-GET-IV")
     res = etsy.get_listing_inventory(id)

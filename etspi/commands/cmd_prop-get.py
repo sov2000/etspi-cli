@@ -34,7 +34,7 @@ def get_listing_props(ctx: Any, id: int, shop_id: int, prop_id: int, query: str,
 
 @click.command("prop-get", short_help="Retrieve or Get all listing Properties by Listing ID")
 @click.option("-i", "--id", required=True, type=click.INT, help="Listing ID to which apply action.")
-@click.option("-s", "--shop-id", required=False, default=0, type=click.INT, help="Shop ID to use to retrieve listing properties, required if no Property ID specified.")
+@click.option("-s", "--shop-id", required=True, default=0, type=click.INT, help="Shop ID to use to retrieve listing properties, required if no Property ID specified.")
 @click.option("-pi", "--prop-id", required=False, default=0, type=click.INT, help="Listing Property ID to retrieve or, if omitted or 0, get all properties.")
 @click.option("-q", "--query", type=click.STRING, help="JMESPath query to filter the output of the command.")
 @click.option("-o", "--out", required=False, type=click.File(mode="w", encoding="utf-8", errors="strict", lazy=None, atomic=False), help="Also output result into a file")

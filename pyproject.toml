@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "etspi"
-version = "1.0.1"
+version = "1.0.2"
 description = "CLI App to manage Etsy shop and listings."
 authors = ["sov2000 <sv28k64@gmail.com>"]
 license = "MIT License"

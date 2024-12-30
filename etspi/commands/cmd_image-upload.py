@@ -6,7 +6,7 @@ from etspi.cli import pass_environment, Environment
 from etspi.etsyv3 import EtsyAPI, Includes
 from etspi.etsyv3.models import UploadListingImageRequest, UpdateListingImageIDRequest
 
-def upload_listing_image(ctx: Any, id: str, shop_id: str, src_file: Any, img_id: str, rank: str,
+def upload_listing_image(ctx: Any, id: int, shop_id: int, src_file: Any, img_id: int, rank: int,
                         overwrite: bool, watermark: bool, alt_text: str, silent: bool) -> None:
     ctx.vlog(f"Upload or Update Image Action for Listing ID: {id} Image ID {img_id}")
     etsy = ctx.get_etsy("LISTING-UPDATE")

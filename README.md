@@ -62,6 +62,46 @@ Before you can use the app, you will need to obtain an API key from Etsy. You ca
     - E.g. `ETSPI_KEY=YOU_ETSY_APP_KEYSTRING` or `ETSPI_TOKEN=YOUR_AUTH_TOKEN`.
     - Command line options take precedence over the env variables and variables take precedence over the values stored in the `Auth.env` file.
 
+## User:
+
+Retrieve current authenticated user ID and Shop ID.
+
+```bash
+etspi user
+```
+
+More User details can be retrieved for a specific User ID.
+
+```bash
+etspi user -u 123456789
+```
+
+## Shop:
+
+Retrieve detailed shop info by Shop Id.
+
+```bash
+etspi shop-get -s 12345678
+```
+
+Same as before but pull info by User ID instead.
+
+```bash
+etspi shop-get -u 123456789
+```
+
+Alternatively, search by Shop Name performing typical partial name search.
+
+```bash
+etspi shop-get -n Paint
+```
+
+Since you the number of the results can be quite large, `-R` option can be used to limit and offset the results with the first number as the `offset` and the second number as the `limit` to retrieve.
+
+```bash 
+etspi shop-get -n Paint -R 9 1
+```
+
 ## Listing:
 
 ### listing-get
@@ -106,7 +146,7 @@ etspi listing-update -i 1800000081 -s 10000001 -f my_listing_update.json
 
 ### listing-delete
 
-This is self-explanatory and will delete a listing by Id. Use `-Y` or `--yes` flat to suppress ***confirmation prompt*** before making the API call to delete the listing!
+This is self-explanatory and will delete a listing by Id. Use `-Y` or `--yes` flag to suppress ***confirmation prompt*** before making the API call to delete the listing!
 
 ```bash
 etspi listing-delete -i 1800000081 -Y
@@ -138,6 +178,74 @@ Use to update the listing inventory with the values from a JSON source file spec
 
 ```bash
 etspi listing-update-iv -i 1800000081 -f my_listing_update.json
+```
+
+## Images:
+
+### image-get
+
+Display all listing Images with IDs, URLs, and other metadata.
+
+```bash
+etspi image-get -i 1800000081
+```
+
+Or if information is only needed for one image, pull it by Image ID in addition to the listing ID.
+
+```bash
+etspi image-get -i 1800000081 -ii 6123123123
+```
+### image-upload
+
+Upload a new image and add it to the listing at the specified `rank` with option `-r` and `-a` for alternate text. If you are uploading into existing `rank`, you will need `-O` option to allow overwriting of the content.
+
+```bash
+etspi image-upload -i 1800000081 -s 12345678 -f "path\to\my\Listing_Image_File.jpg" -r 5 -a "Tree print wall art"
+```
+
+### image-delete
+
+Delete an image from listing by Image Id. Use `-Y` or `--yes` flag to suppress ***confirmation prompt*** before making the API call to delete.
+
+```bash
+etspi image-delete -i 1800000081 -ii 6123123123
+```
+
+## Properties:
+
+### prop-get:
+
+To retrieve all properties for a listing.
+
+```bash
+etspi prop-get -i 1800000081 -s 12345678
+```
+
+To retrieve a specific property (with ID 98765432) for a listing
+
+```bash
+etspi prop-get -i 1800000081 -s 12345678 -pi 98765432
+```
+
+To retrieve all properties for a listing and save the output to a file named "listing_properties.json"
+
+```bash
+etspi prop-get -i 1800000081 -s 12345678 -o listing_properties.json
+```
+
+To retrieve all properties for a listing, format the output for a listing property update request, and save the output to a file named "listing_property_update.json"
+
+```bash
+etspi prop-get -i 1800000081 -s 12345678 --format-update -o listing_property_update.json
+```
+
+### prop-update
+
+To update a property for listing, you will need a JSON file in the correct update format. Use the `prop-get` command to generte a file you can modify in the correct format.
+
+
+```bash
+etspi prop-update -i 1800000081 -s 12345678 -pi 98765432 -f listing_property_update.json
 ```
 
 ## Note on STDOUT redirects

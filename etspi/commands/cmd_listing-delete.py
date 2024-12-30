@@ -5,7 +5,7 @@ from rich import print
 from etspi.cli import pass_environment, Environment
 from etspi.etsyv3 import EtsyAPI, Includes
 
-def delete_listing(ctx: Any, id: str, yes: bool, silent: bool) -> None:
+def delete_listing(ctx: Any, id: int, yes: bool, silent: bool) -> None:
     ctx.vlog(f"Delete Action for Listing ID: {id}")
     etsy = ctx.get_etsy("LISTING-DELETE")
     confirm = True

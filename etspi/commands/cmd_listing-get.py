@@ -8,7 +8,7 @@ from etspi.cli import pass_environment, Environment
 from etspi.etsyv3 import EtsyAPI, Includes
 from etspi.etsyv3.models import CreateDraftListingRequest, UpdateListingRequest
 
-def get_listing(ctx: Any, id: str, includes: List, transform: str, query: str, out: Any, silent: bool) -> None:
+def get_listing(ctx: Any, id: int, includes: List, transform: str, query: str, out: Any, silent: bool) -> None:
     ctx.vlog(f"Get Action for Listing ID: {id}")
     etsy = ctx.get_etsy("LISTING-GET")
     res = etsy.get_listing(id, includes)

@@ -5,7 +5,7 @@ from rich import print
 from etspi.cli import pass_environment, Environment
 from etspi.etsyv3 import EtsyAPI, Includes
 
-def delete_listing_image(ctx: Any, id: str, shop_id: str, img_id: str, yes: bool, silent: bool) -> None:
+def delete_listing_image(ctx: Any, id: int, shop_id: int, img_id: int, yes: bool, silent: bool) -> None:
     ctx.vlog(f"Delete Action for Listing ID: {id} and Image ID: {img_id}")
     etsy = ctx.get_etsy("IMAGE-DELETE")
     confirm = True
