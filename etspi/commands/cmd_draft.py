@@ -9,7 +9,7 @@ from etspi.cli import pass_environment, Environment
 from etspi.etsyv3 import EtsyAPI, Includes
 from etspi.etsyv3.models import CreateDraftListingRequest
 
-def draft_listing(ctx: Any, shop_id: str, src_file: Any, silent: bool) -> None:
+def draft_listing(ctx: Any, shop_id: int, src_file: Any, silent: bool) -> None:
     pld = json.load(src_file)
     etsy = ctx.get_etsy("DRAFT")
     if "type" in pld:

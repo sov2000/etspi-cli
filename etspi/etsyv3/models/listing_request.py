@@ -446,7 +446,16 @@ class UpdateListingPropertyRequest(Request):
             nullable=UpdateListingPropertyRequest.nullable,
             mandatory=UpdateListingPropertyRequest.mandatory,
         )
-
+    
+    @staticmethod
+    def generate_request_from_listing_property_response(
+        response: Dict[str, Any]
+    ) -> UpdateListingPropertyRequest:
+        return UpdateListingPropertyRequest(
+            value_ids = response["value_ids"],
+            values = response["values"],
+            scale_id = response["scale_id"],
+        )
 
 class UpdateListingTranslationRequest(Request):
     nullable: List[str] = [

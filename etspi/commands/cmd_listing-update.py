@@ -7,7 +7,7 @@ from etspi.cli import pass_environment, Environment
 from etspi.etsyv3 import EtsyAPI, Includes
 from etspi.etsyv3.models import UpdateListingRequest
 
-def update_listing(ctx: Any, id: str, shop_id: str, src_file: Any, silent: bool) -> None:
+def update_listing(ctx: Any, id: int, shop_id: int, src_file: Any, silent: bool) -> None:
     ctx.vlog(f"Update Action for Listing ID: {id}")
     pld = json.load(src_file)
     etsy = ctx.get_etsy("LISTING-UPDATE")

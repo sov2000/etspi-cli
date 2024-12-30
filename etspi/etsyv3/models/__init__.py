@@ -1,6 +1,7 @@
 from .listing_inventory import ListingInventory
 from .listing_property import ListingProperty
-from .listing_request import Request, CreateDraftListingRequest, UpdateListingRequest, UpdateVariationImagesRequest, UpdateListingInventoryRequest
+from .listing_request import Request, CreateDraftListingRequest, UpdateListingRequest, UpdateVariationImagesRequest, UpdateListingInventoryRequest, UpdateListingImageIDRequest, UpdateListingPropertyRequest
+from .file_request import UploadListingImageRequest
 
 __all__ = [
     "ListingInventory",
@@ -9,5 +10,8 @@ __all__ = [
     "CreateDraftListingRequest",
     "UpdateListingRequest",
     "UpdateVariationImagesRequest",
-    "UpdateListingInventoryRequest"
+    "UpdateListingInventoryRequest",
+    "UpdateListingImageIDRequest",
+    "UploadListingImageRequest",
+    "UpdateListingPropertyRequest"
 ]

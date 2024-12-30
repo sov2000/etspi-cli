@@ -10,7 +10,7 @@ from dotenv import load_dotenv, dotenv_values
 
 import click
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
 # Click context and environment utility class
 class Environment:
@@ -136,6 +136,7 @@ cmd_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), "commands")
 @click.option("-E", "--expiry", required=False, help="API access token future expiration timestamp.")
 @click.option("-nP", "--no-persist", is_flag=True, default=False, help="Do not update auth.env file when tokens are refreshed. By default, if the file exists, new tokens are automatically saved.")
 @click.option("-v", "--verbose", is_flag=True, help="Enables verbose output mode.")
+@click.version_option(version=__version__, message='%(prog)s, version %(version)s')
 @pass_environment
 @click.pass_context
 def cli(root: Any, ctx: Any, token: Any, refresh_token: Any, key: Any, expiry: Any, no_persist: bool, verbose: Any) -> None:

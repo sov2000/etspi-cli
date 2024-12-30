@@ -110,7 +110,7 @@ def start_httpd_service(ctx: Any, host: str, port: int, certfile: str, keyfile: 
 
 def check_all_scopes(scopes: List) -> List:
     if "all" in scopes:
-        return ["feedback_r", "listings_d", "listings_r", "listings_w", "shops_r", "shops_w", "transactions_r", "transactions_w"]
+        return ["email_r", "listings_d", "listings_r", "listings_w", "shops_r", "shops_w", "transactions_r", "transactions_w"]
     return scopes
 
 def get_auth_directions(ctx: Any, auth_hlp: AuthHelper, rdr_url: str, scope_list: list) -> None:
@@ -136,7 +136,7 @@ def get_auth_directions(ctx: Any, auth_hlp: AuthHelper, rdr_url: str, scope_list
               default=os.path.join(os.path.expanduser('~'), ".etspi\\key.pem"), 
               help="Callback server SSL key file location.")
 @click.option("-s", "--scope", multiple=True, default=["all"],
-              type=click.Choice(["all", "feedback_r", "listings_d", "listings_r", "listings_w", "shops_r", "shops_w", "transactions_r", "transactions_w"], case_sensitive=True), 
+              type=click.Choice(["all", "email_r", "listings_d", "listings_r", "listings_w", "shops_r", "shops_w", "transactions_r", "transactions_w"], case_sensitive=True), 
               help="Specify scope options to request for authorization or 'all' for all currently supported scopes.")
 @click.option("-tF", "--token-file", is_flag=True, default=False, help="Write out the tokens to the auth.env file.")
 @click.option("-tH", "--token-hidden", is_flag=True, default=False, help="Supress the output of the tokens to the console.")

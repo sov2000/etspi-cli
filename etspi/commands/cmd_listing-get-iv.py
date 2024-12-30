@@ -8,7 +8,7 @@ from etspi.cli import pass_environment, Environment
 from etspi.etsyv3 import EtsyAPI, Includes
 from etspi.etsyv3.models import UpdateListingInventoryRequest
 
-def get_listing_inventory(ctx: Any, id: str, transform: str, query: str, out: Any, silent: bool) -> None:
+def get_listing_inventory(ctx: Any, id: int, transform: str, query: str, out: Any, silent: bool) -> None:
     ctx.vlog(f"Get Inventroy Action for Listing ID: {id}")
     etsy = ctx.get_etsy("LISTING-GET-IV")
     res = etsy.get_listing_inventory(id)
@@ -25,7 +25,6 @@ def get_listing_inventory(ctx: Any, id: str, transform: str, query: str, out: An
 
 @click.command("listing-get-iv", short_help="Retrieve or Get a listing inventory by ID")
 @click.option("-i", "--id", required=True, type=click.INT, help="Listing ID to which apply action.")
-#@click.option("-t", "--transform", is_flag=True, default=False, help="Transform listing or inventory response into format suitable for update inventory request.")
 @click.option("--format-update", "transform", flag_value="update", default=False, help="Transform listing response into format suitable for listing update request.")
 @click.option("-q", "--query", type=click.STRING, help="JMESPath query to filter the output of the command.")
 @click.option("-o", "--out", required=False, type=click.File(mode="w", encoding="utf-8", errors="strict", lazy=None, atomic=False), help="Also output result into a file")
