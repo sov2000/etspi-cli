@@ -57,18 +57,18 @@ Before you can use the app, you will need to obtain an API key from Etsy. You ca
 
 - To start the auth flow for all scopes, default redirect URL, and cert/key files from the prior step:
     ```bash
-    etspi auth -tF
+    etspi -K YOUR_API_KEY auth -tF
     ```
-    - `-tF` flag saves tokens to the `Auth.env` file. See `etspi auth --help` for more options.
+    - `-tF` flag saves tokens to the `auth.env` file. See `etspi auth --help` for more options.
 
 - The Etspi will compose an Auth URL to start the flow.
 - Authenticate with Etsy and authorize your app with the assigned keystring for access to the requested scopes.
 - Upon authorization completion, Etsy redirects your browser to the defined callback URL, where Etspi is waiting to obtain the tokens.
 - The redirect request contains an authorization code from Etsy that is needed to request the tokens.
-- If successful in obtaining the tokens, they are saved in `Auth.env` file in the `.etspi/` home folder.
-- Most Etspi commands require authorization tokens that can either be pulled from the `Auth.env` file, specified on the command line, or set as environment variables in your shell.
+- If successful in obtaining the tokens, they are saved in `auth.env` file in the `.etspi/` home folder.
+- Most Etspi commands require authorization tokens that can either be pulled from the `auth.env` file, specified as arguments, or set as environment variables in your shell.
     - E.g. `ETSPI_KEY=YOU_ETSY_APP_KEYSTRING` or `ETSPI_TOKEN=YOUR_AUTH_TOKEN`.
-    - Command line options take precedence over the env variables and variables take precedence over the values stored in the `Auth.env` file.
+    - See *Configuration* section for more details.
 
 ## User:
 
