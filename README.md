@@ -6,7 +6,7 @@ provided by Etsy and allows viewing and managing the shop and the listings direc
 ## Prerequisites:
 
 - Access to the Etsy API is essential. Review [Etsy Quick Start Guide](https://developers.etsy.com/documentation/tutorials/quickstart) for directions on how to get your personal API key. 
-- Etspi doesn't provide API key assistance, but it can help with authorization and managing access tokens (explained in the **Authentication** section).
+- Familiarize yourself with the Etsy OAuth 2.0 authentication process ([link to Etsy OAuth 2.0 documentation](https://developers.etsy.com/documentation/essentials/authentication))
 - Familiarity with JMESPath expressions ([link to JMESPath examples](https://jmespath.org/examples.html)) is recommended to filter and transform output data.
 
 ## Features:
@@ -25,9 +25,17 @@ pipx install etspi
 ```
 If you plan to use Etspi to obtain API tokens, you will also need to have `openssl` installed or some other means to generate certificates suitable for SSL/TLS to secure HTTP server. Alternatively, you can use dedicated tools like Postman to obtain tokens manually. However, Etspi offers a more convenient approach, and you only need to do this once if you persist the tokens. Etspi will automatically use persited refresh token to get a fresh API token when necessary.
 
+## Configuration:
+
+Etspi requires `--key`, `--token`, `--refresh-token`, and `--expiry` arguments for all commands excepts the `auth` command which is used to obtain and setup these values. The values for these arguments can be also supplied via environmental variables prefixed by `ETSPI_` followed by argument name, e.g. `ETSPI_TOKEN`, `ETSPI_REFRESH_TOKEN`, etc.
+
+Etspi will also attempt to load these values from `auth.env` file located in `.etspi` folder in user home directory. Etspi will create this folder on first invocation, but the `auth.env` file has to be created by the `auth` command with persist `-tF` flag or manually. The format for the file is standard `.env` file with `key=value` pair on each line. Because the file contains sensitive information, consider securing the file with proper permissions and ensure that it can only be read/written by the user running `etspi`.
+
+The source and the values of the required arguments can be checked by supplying the `-v` flag to `etspi`. This will output `Auth Parameters` table with key, values, and their sources. The possible value sources are COMMANDLINE for command line arguments, ENVIRONMENT for environment variables, and DEFAULT_MAP for `auth.env` file. The precedence is such that environment variable values override the `auth.env` file values and command line arguments override both the variables and the file values.
+
 ## Authentication:
 
-Before you can use the app, you will need to obtain an API key from Etsy. You can find more info and how to request a key on the [developer portal](https://www.etsy.com/developers). Familiarize yourself with the Etsy OAuth 2.0 authentication process ([link to Etsy OAuth 2.0 documentation](https://developers.etsy.com/documentation/essentials/authentication)). Etspi assists with authorization and tokens once you've created an app and acquired an API key.
+Before you can use the app, you will need to obtain an API key from Etsy. You can find more info and how to request a key on the [developer portal](https://www.etsy.com/developers). Etspi assists with authorization and tokens once you've created an app and acquired an API key. If the tokens are saved, they are automatically refreshed as needed upon expiration.
 
 - Note the Keystring from the App settings. You will need it to start the auth flow.
 - In the App settings, you will also need to add a callback URL for the Etspi that will be used in the auth flow.
