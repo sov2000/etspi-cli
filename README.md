@@ -219,6 +219,87 @@ Delete an image from listing by Image Id. Use `-Y` or `--yes` flag to suppress *
 etspi image-delete -i 1800000081 -ii 6123123123
 ```
 
+### Updated 
+
+README.md
+
+
+
+```markdown
+```bash
+etspi listing-update-iv -i 1800000081 -f my_listing_update.json
+```
+
+## Images:
+
+### image-get
+
+Display all listing Images with IDs, URLs, and other metadata.
+
+```bash
+etspi image-get -i 1800000081
+```
+
+Or if information is only needed for one image, pull it by Image ID in addition to the listing ID.
+
+```bash
+etspi image-get -i 1800000081 -ii 6123123123
+```
+
+### image-upload
+
+Upload a new image and add it to the listing at the specified `rank` with option `-r` and `-a` for alternate text. If you are uploading into existing `rank`, you will need `-O` option to allow overwriting of the content.
+
+```bash
+etspi image-upload -i 1800000081 -s 12345678 -f "path\to\my\Listing_Image_File.jpg" -r 5 -a "Tree print wall art"
+```
+
+### image-delete
+
+Delete an image from listing by Image Id. Use `-Y` or `--yes` flag to suppress ***confirmation prompt*** before making the API call to delete.
+
+```bash
+etspi image-delete -i 1800000081 -ii 6123123123
+```
+
+## Videos:
+
+### video-get
+
+Display all listing Videos with IDs, URLs, and other metadata. Use this method if you do not have Video ID.
+
+```bash
+etspi video-get -i 1800000081
+```
+
+Or if information is only needed for one video and you have the ID, pull it by Video ID in addition to the listing ID.
+
+```bash
+etspi video-get -i 1800000081 -vi 6123123123
+```
+
+### video-upload
+
+Upload a new video or update an existing video by Listing ID and Video ID.
+
+```bash
+etspi video-upload -i 1800000081 -s 12345678 -f "path\to\my\Listing_Video_File.mp4"
+```
+
+Or to update an existing video by Video ID. Supplying Video ID is redundant because, at the moment, Etsy only supports one listing video.
+
+```bash
+etspi video-upload -i 1800000081 -s 12345678 -f "path\to\my\Listing_Video_File.mp4" -vi 6123123123
+```
+
+### video-delete
+
+Delete a video from listing by Video ID. Use `-Y` or `--yes` flag to suppress ***confirmation prompt*** before making the API call to delete.
+
+```bash
+etspi video-delete -i 1800000081 -s 12345678 -vi 6123123123 -Y
+```
+
 ## Properties:
 
 ### prop-get:
