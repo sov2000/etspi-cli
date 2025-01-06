@@ -1,5 +1,14 @@
 # Change Log
 
+## [1.0.3] - 2025-01
+
+### Added
+- Video command with full support for get, upload, and delete
+- Shop Find command to search shop listings by various parameters
+
+### Updated
+- Minor bug fixes, code improvements, and documentation updates
+
 ## [1.0.2] - 2024-12
 
 ### Added
