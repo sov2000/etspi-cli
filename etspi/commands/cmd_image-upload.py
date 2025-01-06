@@ -14,20 +14,19 @@ def upload_listing_image(ctx: Any, id: int, shop_id: int, src_file: Any, img_id:
         img_content = src_file.read()
         listing_img = UploadListingImageRequest(image_bytes = img_content, listing_image_id = img_id, rank = rank, overwrite = overwrite, 
                                                 is_watermarked = watermark, alt_text = alt_text)
-        res = etsy.upload_listing_image(shop_id, id, listing_img)
     elif not img_id is None:
         listing_img = UpdateListingImageIDRequest(listing_image_id = img_id, rank = rank, overwrite = overwrite,
                                                 is_watermarked = watermark, alt_text = alt_text)
-        res = etsy.update_listing_image_id(shop_id, id, listing_img)
     else:
-        raise click.BadArgumentUsage("No Source File or Image Id provided for upload or update.") 
+        raise click.BadArgumentUsage("No Source File or Image Id provided for upload or update.")
+    res = etsy.update_listing_image_id(shop_id, id, listing_img) 
     if not silent:
         print(res)
     return
 
 @click.command("image-upload", short_help="Upload a new listing image or update by Image ID")
 @click.option("-i", "--id", required=True, type=click.INT, help="Listing ID to which apply action.")
-@click.option("-s", "--shop-id", required=False, type=click.INT, help="Shop ID to use for update and other actions.")
+@click.option("-s", "--shop-id", required=True, type=click.INT, help="Shop ID to use for update and other actions.")
 @click.option("-f", "--src-file", required=False, help="Source image file from which to read content to upload.",
               type=click.File(mode="rb", encoding="utf-8", errors="strict", lazy=None, atomic=False))
 @click.option("-ii", "--img-id", required=False, default=1, type=click.INT, help="Image ID to update for existing.")

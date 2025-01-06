@@ -110,6 +110,60 @@ Since you the number of the results can be quite large, `-R` option can be used 
 etspi shop-get -n Paint -R 9 1
 ```
 
+## Shop Find Listings:
+
+### shop-find
+
+Find shop listings by various parameters and metadata. The listings can be filtered by state, section id, or keywords and sorted by Create/Update dates, price, or score. Due to API limitations, you cannot combine state and section id search or state and keyword searches.
+
+Find first 3 listings for the shop.
+
+```bash
+etspi shop-find -s 12345678 -R 0 3
+```
+
+Same as above, but filter the output with JMESPath expression to only output `listing_id`.
+
+```bash
+etspi shop-find -s 12345678 -R 0 3 -q "results[*].listing_id"
+```
+
+Find first 5 `draft` listings for the shop.
+
+```bash
+etspi shop-find -s 12345678 -R 0 5 -q "results[*].listing_id" -st Draft
+```
+
+Find first 5 listings for the shop in `active` state and order by default `Create Date` in ascending order.
+
+```bash
+etspi shop-find -s 12345678 -R 0 5 -q "results[*].listing_id" -st Active -so Asc
+```
+
+Same as above, but this time find the listings by `Updated Date`.
+
+```bash
+etspi shop-find -s 12345678 -R 0 5 -q "results[*].listing_id" -st Active -so Asc -ss Updated
+```
+
+Find first 5 `active` listings for the shop ordered by `Price` and display `listing_id` and `title` for each.
+
+```bash
+etspi shop-find -s 12345678 -R 0 5 -q "results[*].{listing_id: listing_id, title: title}" -st Active -so Asc -ss Price
+```
+
+Find first 5 listings by `Section ID` with `-si` flag and order the result in descending order by `Created Date`.
+
+```bash
+etspi shop-find -s 12345678 -si 12345678 -R 0 5 -q "results[*].{listing_id: listing_id, title: title}" -so Desc -ss Created
+```
+
+Find first 5 listings by keyword using `-K` flag and order the result in descending order by `Created Date`'
+
+```bash
+etspi shop-find -s 12345678 -K "lily" -R 0 5 -q "results[*].{listing_id: listing_id, title: title}" -so Desc -ss Created
+```
+
 ## Listing:
 
 ### listing-get
@@ -217,6 +271,44 @@ Delete an image from listing by Image Id. Use `-Y` or `--yes` flag to suppress *
 
 ```bash
 etspi image-delete -i 1800000081 -ii 6123123123
+```
+
+## Videos:
+
+### video-get
+
+Display all listing Videos with IDs, URLs, and other metadata. Use this method if you do not have Video ID.
+
+```bash
+etspi video-get -i 1800000081
+```
+
+Or if information is only needed for one video and you have the ID, pull it by Video ID in addition to the listing ID.
+
+```bash
+etspi video-get -i 1800000081 -vi 6123123123
+```
+
+### video-upload
+
+Upload a new video or update an existing video by Listing ID and Video ID.
+
+```bash
+etspi video-upload -i 1800000081 -s 12345678 -f "path\to\my\Listing_Video_File.mp4"
+```
+
+Or to update an existing video by Video ID. Supplying Video ID is redundant because, at the moment, Etsy only supports one listing video.
+
+```bash
+etspi video-upload -i 1800000081 -s 12345678 -f "path\to\my\Listing_Video_File.mp4" -vi 6123123123
+```
+
+### video-delete
+
+Delete a video from listing by Video ID. Use `-Y` or `--yes` flag to suppress ***confirmation prompt*** before making the API call to delete.
+
+```bash
+etspi video-delete -i 1800000081 -s 12345678 -vi 6123123123 -Y
 ```
 
 ## Properties:
