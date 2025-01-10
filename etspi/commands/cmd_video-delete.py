@@ -24,7 +24,7 @@ def delete_listing_video(ctx: Any, id: int, shop_id: int, vid_id: int, yes: bool
 
 @click.command("video-delete", short_help="Delete listing video by Video and Listing ID")
 @click.option("-i", "--id", required=True, type=click.INT, help="Listing ID to which apply action.")
-@click.option("-s", "--shop-id", required=False, type=click.INT, help="Shop ID to use for update and other actions.")
+@click.option("-s", "--shop-id", required=False, type=click.INT, help="Shop ID to use for video delete action.")
 @click.option("-vi", "--vid-id", required=True, type=click.INT, help="Video ID to delete.")
 @click.option("-Y", "--yes", required=False, default=False, is_flag=True, help="Do not ask to confirm video delete.")
 @click.option("-S", "--silent", required=False, default=False, is_flag=True, help="Suppress console output.")

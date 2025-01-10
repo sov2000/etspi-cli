@@ -1,5 +1,13 @@
 # Change Log
 
+## [1.0.4] - 2025-01
+
+### Added
+- File command with full support for get, upload, and delete to manage digital listings
+
+### Updated
+- Minor bug fixes, code improvements, and documentation updates
+
 ## [1.0.3] - 2025-01
 
 ### Added

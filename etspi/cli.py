@@ -10,7 +10,7 @@ from dotenv import load_dotenv, dotenv_values
 
 import click
 
-__version__ = "1.0.3"
+__version__ = "1.0.4"
 
 # Click context and environment utility class
 class Environment:
