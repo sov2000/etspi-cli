@@ -1,4 +1,5 @@
 import click
+import os
 
 from typing import Any, Dict, List, Optional
 from rich import print
@@ -11,9 +12,9 @@ def upload_listing_video(ctx: Any, id: int, shop_id: int, src_file: Any, vid_id:
     etsy = ctx.get_etsy("LISTING-UPDATE")
     if not src_file is None:
         vid_content = src_file.read()
-        listing_vid = UploadListingVideoRequest(video_bytes = vid_content, listing_video_id = 1, name = src_file.name)
+        listing_vid = UploadListingVideoRequest(video_bytes=vid_content, listing_video_id=None, name=os.path.basename(src_file.name))
     elif not vid_id is None:
-        listing_vid = UploadListingVideoRequest(video_bytes = None, listing_video_id = vid_id, name = str(vid_id))
+        listing_vid = UploadListingVideoRequest(video_bytes=None, listing_video_id=vid_id, name=str(vid_id))
     else:
         raise click.BadArgumentUsage("No Source File provided for upload or update.")
     res = etsy.upload_listing_video(shop_id, id, listing_vid)

@@ -12,11 +12,11 @@ def upload_listing_image(ctx: Any, id: int, shop_id: int, src_file: Any, img_id:
     etsy = ctx.get_etsy("LISTING-UPDATE")
     if not src_file is None:
         img_content = src_file.read()
-        listing_img = UploadListingImageRequest(image_bytes = img_content, listing_image_id = img_id, rank = rank, overwrite = overwrite, 
-                                                is_watermarked = watermark, alt_text = alt_text)
+        listing_img = UploadListingImageRequest(image_bytes=img_content, listing_image_id=img_id, rank=rank, overwrite=overwrite, 
+                                                is_watermarked=watermark, alt_text=alt_text)
     elif not img_id is None:
-        listing_img = UpdateListingImageIDRequest(listing_image_id = img_id, rank = rank, overwrite = overwrite,
-                                                is_watermarked = watermark, alt_text = alt_text)
+        listing_img = UpdateListingImageIDRequest(listing_image_id=img_id, rank=rank, overwrite=overwrite,
+                                                is_watermarked=watermark, alt_text=alt_text)
     else:
         raise click.BadArgumentUsage("No Source File or Image Id provided for upload or update.")
     res = etsy.update_listing_image_id(shop_id, id, listing_img) 

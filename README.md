@@ -166,6 +166,8 @@ etspi shop-find -s 12345678 -K "lily" -R 0 5 -q "results[*].{listing_id: listing
 
 ## Listing:
 
+The following commands are used to create, update, and delete the listings along with basic listing information like title, description, tags, shipping profile, etc.
+
 ### listing-get
 
 The most basic use case is to pull listing data by its Id.
@@ -309,6 +311,52 @@ Delete a video from listing by Video ID. Use `-Y` or `--yes` flag to suppress **
 
 ```bash
 etspi video-delete -i 1800000081 -s 12345678 -vi 6123123123 -Y
+```
+
+## Files:
+
+File commands are used to manage file assets for digital listings. Etsy will convert a physical listing to digital if you associate a file with an existing physical listing. Similarly, a digital listing will convert to a physical one when you delete the last file from the listing.
+
+### file-get
+
+Display all listing Files with ID, name, size, type, etc. Use this method if you do not have a specific File ID.
+
+```bash
+etspi file-get -i 1800000081 -s 12345678
+```
+
+Or if information is only needed for one file and you have the ID, pull it by File ID in addition to the listing ID.
+
+```bash
+etspi file-get -i 1800000081 -s 12345678 -fi 13123123123123
+```
+
+### file-upload
+
+Upload a new file from a local path.
+
+```bash
+etspi file-upload -i 1800000081 -s 12345678 -f "path\to\my\Listing_Digital_Content_File.pdf"
+```
+
+Use the `-r` or `--rank` argument to manipulate the file at the `rank` position in the list of multiple files.
+
+```bash
+etspi file-upload -i 1800000081 -s 12345678 -f "path\to\my\Listing_Digital_Content_File.pdf" -r 2
+```
+
+Or to associate an existing file with File ID to Listing ID. 
+
+```bash
+etspi file-upload -i 1800000081 -s 12345678 -fi 13123123123123
+```
+
+### file-delete
+
+Delete a file from listing by File ID. Use `-Y` or `--yes` flag to suppress ***confirmation prompt*** before making the API call to delete.
+
+```bash
+etspi file-delete -i 1800000081 -s 12345678 -fi 13123123123123 -Y
 ```
 
 ## Properties:
