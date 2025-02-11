@@ -1,37 +1,31 @@
 import json
 import yaml
 import click
-import jmespath
 import hashlib
 import time
 import os
 
 from typing import Any, Dict, List, Optional
 from rich import print
+from etspi.util import sync
+from etspi.util import listfileio
 from etspi.cli import pass_environment, Environment
 from etspi.etsyv3 import EtsyAPI, Includes, ListingState, SortOn, SortOrder
 from etspi.etsyv3.models import CreateDraftListingRequest, UpdateListingRequest
 
-def hash_list_data(obj: Any) -> Optional[str]:
-    json_string = json.dumps(obj, ensure_ascii=False) # ensure_ascii is important for non-ascii characters in the dictionary
-    encoded_string = json_string.encode('utf-8')
-    hash_object = hashlib.sha256(encoded_string)
-    hex_digest = hash_object.hexdigest()
-    return hex_digest
-
 def import_listing(ctx: Any, id: int, out: Any, root: str, format: str, with_folder: bool = False) -> Dict:
     listing = {}
-    listing_meta = { "images_hash": None, "listing_hash": None, "last_updated": int(time.time()) }
+    listing_meta = { "listing_id": id, "images_hash": None, "listing_hash": None, "last_updated": int(time.time()) }
     etsy = ctx.get_etsy("SYNC-IMPORT")
     res = etsy.get_listing(id, [Includes.SHIPPING, Includes.IMAGES])
     res = UpdateListingRequest.generate_request_from_listing_response(res).get_dict()
     if "image_ids" in res:
-        imgs_hash = hash_list_data(res["image_ids"])
+        imgs_hash = sync.hash_list_data(res["image_ids"])
         if imgs_hash:
             listing_meta["images_hash"] = imgs_hash
         listing["images"] = res["image_ids"]
         del res["image_ids"]
-    list_hash = hash_list_data(res)
+    list_hash = sync.hash_list_data(res)
     if list_hash:
         listing_meta["listing_hash"] = list_hash
     listing["listing"] = res
@@ -43,13 +37,15 @@ def import_listing(ctx: Any, id: int, out: Any, root: str, format: str, with_fol
                 os.makedirs(fld_path)
         file_ext = "ejs" if format == "JSON" else "eyml"
         filename = os.path.join(root, os.path.join(str(id), f"{id}.{file_ext}") if with_folder else f"{id}.{file_ext}")
-        with open(filename, 'w', encoding="utf-8") as file:
-            if format == "YAML":
-                yaml.dump(listing, file, default_flow_style=False, allow_unicode=True)
-            else:
-                file.write(json.dumps(listing, indent=4))
+        listfileio.save_listing_file(ctx, listing, filename, format)
+        # with open(filename, 'w', encoding="utf-8") as file:
+        #     if format == "YAML":
+        #         yaml.dump(listing, file, default_flow_style=False, allow_unicode=True, sort_keys=False)
+        #     else:
+        #         file.write(json.dumps(listing, indent=4))
     else:
-        out.write(json.dumps(listing, indent=4))
+        #out.write(json.dumps(listing, indent=4))
+        listfileio.save_listing_file(ctx, listing, None, format, out)
     return listing
 
 def sync_listing(ctx: Any, id: int, out: Any, root: str, format: str) -> None:
@@ -112,11 +108,10 @@ def sync_shop_section(ctx: Any, shop_id: int, section_id: List, state: str, root
 #@click.option("-S", "--silent", required=False, default=False, is_flag=True, help="Supress console output.")
 @pass_environment
 def cli(ctx, id, section_id, shop_id, state, out, root_folder, format):
-    """Perform a GET action on a listing by its ID."""
+    """Perform a IMPORT action on a listing, shop section, or shop by IDs."""
     ctx.check_auth("SYNC-IMPORT")
-    if not id is None:
-        ctx.vlog(f"Process SYNC-IMPORT listing: {id}")
     try:
+        ctx.vlog(f"Process SYNC-IMPORT")
         sts = ListingState(state) if state else None
         if shop_id and section_id:
             sync_shop_section(ctx, shop_id, section_id, sts, root_folder, format)
