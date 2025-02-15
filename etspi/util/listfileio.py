@@ -6,13 +6,18 @@ import glob
 from typing import Any, Dict, List, Optional
 
 # load the listing file from either json or yaml format by path and return the listing object
-def load_listing_file(ctx: Any, file: str) -> Dict:
+def load_listing_file(ctx: Any, file: str, format: str = "JSON", stream: Any = None) -> Dict:
     listing = {}
-    with open(file, 'r', encoding="utf-8") as f:
-        if file.endswith(".ejs"):
-            listing = json.load(f)
-        else:
-            listing = yaml.safe_load(f)
+    base_name, ext = os.path.splitext(file) if file else ("", "")
+    f = stream
+    if stream is None:
+        f = open(file, 'r', encoding="utf-8")
+    if format == "YAML" or ext in [".eyml", ".eyaml", ".yaml", ".yml"]:
+        listing = yaml.safe_load(f)
+    else:
+        listing = json.load(f)
+    if stream is None:
+        f.close()
     return listing
 
 def save_listing_file(ctx: Any, listing: Dict, file: str = None, format: str = "JSON", stream: Any = None) -> None:

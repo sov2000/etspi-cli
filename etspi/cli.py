@@ -6,6 +6,7 @@ from etspi.etsyv3 import EtsyAPI
 from typing import Any, Dict, List, Optional
 from rich.console import Console
 from rich.table import Table
+from rich.padding import Padding
 from dotenv import load_dotenv, dotenv_values
 
 import click
@@ -22,6 +23,7 @@ class Environment:
         self.token = None
         self.refresh_token = None
         self.expiry = None
+        self.root_obj = None
         self.options = {}
 
     def set_auth_params(self, token: str, refresh_token: str, key: str, expiry: str) -> None:
@@ -122,7 +124,7 @@ def show_auth_params(root: click.Context, ctx: Any) -> None:
         value, source = (root.params[ap], root.get_parameter_source(ap).name) if ap in root.params else ("NOT FOUND", "MISSING")
         table.add_row(ap, value, source)
     with console.capture() as capture:
-        console.print(table)
+        console.print(Padding(table, (1, 0, 0, 0)))
     ctx.echo(capture.get())
 
 CONTEXT_SETTINGS = dict(auto_envvar_prefix="ETSPI", default_map=Environment.load_auth_config())
@@ -139,13 +141,15 @@ cmd_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), "commands")
 @click.version_option(version=__version__, message='%(prog)s, version %(version)s')
 @pass_environment
 @click.pass_context
-def cli(root: Any, ctx: Any, token: Any, refresh_token: Any, key: Any, expiry: Any, no_persist: bool, verbose: Any) -> None:
+def cli(root: Any, ctx: Any, token: Any, refresh_token: Any, key: Any, expiry: Any, no_persist: bool, verbose: Any) -> int:
     """Command line app to interact with Etsy V3 API for shop management."""
     create_etspi_home()
     ctx.verbose = verbose
     ctx.set_auth_params(token, refresh_token, key, expiry)
+    ctx.root_obj = root.command
     #ctx.check_auth("Default")
     if no_persist:
         ctx.options["no-persist"] = True
     if ctx.verbose:
         show_auth_params(root, ctx)
+    return 0

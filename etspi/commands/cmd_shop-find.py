@@ -5,11 +5,12 @@ import jmespath
 from typing import Any, Dict, List, Optional
 from rich import print
 from etspi.cli import pass_environment, Environment
+from etspi.util import listfileio, pprint
 from etspi.etsyv3 import EtsyAPI, Includes, ListingState, SortOn, SortOrder
 from etspi.etsyv3.models import UpdateListingPropertyRequest
 
 def find_shop_listings(ctx: Any, shop_id: int, section_id: List, state: List, keywords: str, range: tuple, sort_on: List, 
-                       sort_order: List, include: List, query: str, out: Any, silent: bool) -> None:
+                       sort_order: List, include: List, query: str, out: Any, format: str, silent: bool) -> None:
     ctx.vlog(f"Find Shop listings by ID: {shop_id}")
     etsy = ctx.get_etsy("SHOP-FIND")
     if shop_id > 0:
@@ -26,7 +27,8 @@ def find_shop_listings(ctx: Any, shop_id: int, section_id: List, state: List, ke
         if query:
             res = jmespath.search(query, res)
         if out:
-            out.write(json.dumps(res, indent=4))
+            #out.write(json.dumps(res, indent=4))
+            listfileio.save_listing_file(ctx, res, None, format, out)
         if not silent:
             print(res)
     return
@@ -41,11 +43,15 @@ def find_shop_listings(ctx: Any, shop_id: int, section_id: List, state: List, ke
 @click.option("-so", "--sort-order", type=click.Choice([SortOrder.ASC.value, SortOrder.DESC.value], case_sensitive=False), multiple=False)
 @click.option("-in", "--include", type=click.Choice([Includes.SHIPPING.value, Includes.IMAGES.value, Includes.SHOP.value, Includes.USER.value, Includes.TRANSLATIONS.value, Includes.INVENTORY.value, Includes.VIDEOS.value], case_sensitive=False), multiple=True)
 @click.option("-q", "--query", required=False, type=click.STRING, help="JMESPath query to filter the output of the command.")
-@click.option("-o", "--out", required=False, type=click.File(mode="w", encoding="utf-8", errors="strict", lazy=None, atomic=False), help="Also output result into a file")
+@click.option("-o", "--out", required=False,
+              type=click.File(mode="w", encoding="utf-8", errors="strict", lazy=None, atomic=False), help="Also output result into a file")
+@click.option("-F", "--format", required=False, default="JSON", 
+              type=click.Choice(["JSON", "YAML"], case_sensitive=False), multiple=False, help="Set format to JSON or YAML for output file.")
 @click.option("-S", "--silent", required=False, default=False, is_flag=True, help="Supress console output.")
 @pass_environment
-def cli(ctx, shop_id, section_id, state, keywords, range, sort_on, sort_order, include, query, out, silent):
+def cli(ctx, shop_id, section_id, state, keywords, range, sort_on, sort_order, include, query, out, format, silent):
     """Perform a FIND Shop listings action by Shop ID."""
+    result = 0
     ctx.check_auth("SHOP-FIND")
     if not shop_id is None:
         ctx.vlog(f"Process FIND shop listings: {shop_id}")
@@ -54,6 +60,8 @@ def cli(ctx, shop_id, section_id, state, keywords, range, sort_on, sort_order, i
         sts = ListingState(state) if state else None
         sos = SortOn(sort_on) if sort_on else None
         sors = SortOrder(sort_order) if sort_order else None
-        find_shop_listings(ctx, shop_id, section_id, sts, keywords, range, sos, sors, incs, query, out, silent)
+        find_shop_listings(ctx, shop_id, section_id, sts, keywords, range, sos, sors, incs, query, out, format, silent)
     except Exception as ex:
         ctx.log(f"Error processing command - {ex}")
+        result = 1
+    return result

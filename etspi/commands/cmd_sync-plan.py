@@ -1,15 +1,10 @@
 import json
-import yaml
 import click
-import jmespath
-import hashlib
-import time
 import os
 
 from typing import Any, Dict, List, Optional
 from rich import print
-from etspi.util import sync #hash_list_data
-from etspi.util import listfileio #scan_local_root, load_listing_file
+from etspi.util import sync, listfileio, pprint
 from etspi.cli import pass_environment, Environment
 from etspi.etsyv3 import EtsyAPI, Includes, ListingState, SortOn, SortOrder
 from etspi.etsyv3.models import CreateDraftListingRequest, UpdateListingRequest
@@ -23,31 +18,31 @@ def setup_stage_folder(root: str) -> str:
         item_path = os.path.join(directory_path, item)
         if os.path.isfile(item_path):
             os.remove(item_path)
-        else:
-            os.rmdir(item_path)
+        # else:
+        #     os.rmdir(item_path)
     return directory_path
 
 def get_stage_file(ctx: Any, operation: str, id: int) -> str:
     stage_fldr = os.path.join(ctx.options["stage_fldr"], operation)
     if not os.path.exists(stage_fldr):
         os.makedirs(stage_fldr)
-    return os.path.join(stage_fldr, f"{id}.json")
+    return os.path.join(stage_fldr, f"{id}.ejs")
 
-def stage_create_listing(ctx: Any, indx: int, shop_id: int, listing: Any) -> sync.SyncOperation:
+def stage_create_listing(ctx: Any, src_file: str, indx: int, shop_id: int, listing: Any) -> sync.SyncOperation:
     stage_file = get_stage_file(ctx, "draft", indx)
     listfileio.save_listing_file(ctx, listing, stage_file)
-    return sync.SyncOperation(src_file=stage_file, operation="draft", params={
+    return sync.SyncOperation(src_file=src_file, operation="draft", params={
         "shop_id": shop_id, "src_file": stage_file, "silent": True
-        })
+        }).to_dict()
 
-def stage_update_listing(ctx: Any, id: int, shop_id: int, listing: Any) -> sync.SyncOperation:
+def stage_update_listing(ctx: Any, src_file: str, id: int, shop_id: int, listing: Any) -> sync.SyncOperation:
     stage_file = get_stage_file(ctx, "update", id)
     listfileio.save_listing_file(ctx, listing, stage_file)
-    return sync.SyncOperation(src_file=stage_file, operation="listing-update", params={
+    return sync.SyncOperation(src_file=src_file, operation="listing-update", params={
         "id": id, "shop_id": shop_id, "src_file": stage_file, "silent": True
-        })
+        }).to_dict()
 
-def plan_listing_updates(ctx: Any, shop_id: int, root: str, fmt_list: List) -> None:
+def plan_listing_sync(ctx: Any, shop_id: int, root: str, fmt_list: List) -> None:
     ctx.vlog(f"Plan Listing Updates for Shop ID: {shop_id}")
     list_ops = []
     listing_files = listfileio.scan_local_root(ctx, root, fmt_list)
@@ -65,23 +60,26 @@ def plan_listing_updates(ctx: Any, shop_id: int, root: str, fmt_list: List) -> N
                         list_hash = sync.hash_list_data(listing_data)
                         if list_hash != listing_meta.get("listing_hash", ""):
                             ctx.vlog(f"UPDATED - Listing {id} found in file {file} queued for update.")
-                            list_ops.append(stage_update_listing(ctx, id, shop_id, listing, id))
+                            list_ops.append(stage_update_listing(ctx, file, id, shop_id, listing_data))
                         else:
                             ctx.vlog(f"UNCHANGED - Listing {id} found in file {file} skipped.")
                     else:
                         ctx.vlog(f"NEW - Listing found in file {file} queued for creation.")
-                        list_ops.append(stage_create_listing(ctx, shop_id, listing, draft_indx))
+                        list_ops.append(stage_create_listing(ctx, file, draft_indx, shop_id, listing_data))
                         draft_indx += 1
         except Exception as ex:
             ctx.log(f"Error processing listing file {file} - {ex}")
             continue
-    new_llist_ctn = sum([1 for o in list_ops if o.operation == "draft"])
-    upd_llist_ctn = sum([1 for o in list_ops if o.operation == "listing-update"])
-    ctx.vlog(f"Found {len(new_llist_ctn)} new listings and {len(upd_llist_ctn)} listings to update.")
-    stage_file = os.join(ctx.options["stage_fldr"], "plan.json")
-    with open(stage_file, "w", encoding="utf-8") as file:
-        file.write(json.dumps(list_ops, indent=4))
-    ctx.vlog(f"Plan file saved to {stage_file}.")
+    new_llist_ctn = sum([1 for o in list_ops if o["operation"] == "draft"])
+    upd_llist_ctn = sum([1 for o in list_ops if o["operation"] == "listing-update"])
+    ctx.vlog(pprint.context_pprint(f"Found [green]{new_llist_ctn}[/green] new listings and [yellow]{upd_llist_ctn}[/yellow] listings to update."))
+    if len(list_ops) > 0:
+        stage_file = os.path.join(ctx.options["stage_fldr"], "plan.json")
+        with open(stage_file, "w", encoding="utf-8") as file:
+            file.write(json.dumps(list_ops, indent=4))
+        ctx.vlog(f"Plan file saved to {stage_file}.")
+    else:
+        ctx.vlog(f"No listing file changes found to plan for update.")
     return
 
 @click.command("sync-plan", short_help="Search for listing files, detect changes, and plan for listing updates.")
@@ -89,8 +87,9 @@ def plan_listing_updates(ctx: Any, shop_id: int, root: str, fmt_list: List) -> N
 @click.option("-R", "--root-folder", required=False, type=click.STRING, default=".", help="Set root folder for scan operation.")
 @click.option("-F", "--format", required=False, default=None, type=click.Choice(["JSON", "YAML"], case_sensitive=False), multiple=False, help="Set format to JSON or YAML to scan the root folder.")
 @pass_environment
-def cli(ctx, shop_id, root_folder, format):
+def cli(ctx, shop_id, root_folder, format) -> int:
     """Perform a PLAN action on all matching files from root folder."""
+    result = 0
     ctx.check_auth("SYNC-PLAN")
     ctx.vlog(f"Process SYNC-PLAN shop ID: {shop_id} root folder: {root_folder}")
     try:
@@ -102,6 +101,8 @@ def cli(ctx, shop_id, root_folder, format):
             fmt_list = ["*.eyml"]
         else:
             fmt_list = ["*.ejs", "*.eyml"]
-        plan_listing_updates(ctx, shop_id, root_folder, fmt_list)
+        plan_listing_sync(ctx, shop_id, root_folder, fmt_list)
     except Exception as ex:
         ctx.log(f"Error processing command - {ex}")
+        result = 1
+    return result

@@ -5,9 +5,10 @@ import jmespath
 from typing import Any, Dict, List, Optional
 from rich import print
 from etspi.cli import pass_environment, Environment
+from etspi.util import listfileio
 from etspi.etsyv3 import EtsyAPI
 
-def get_listing_image(ctx: Any, id: int, img_id: int, query: str, out: Any, silent: bool) -> None:
+def get_listing_image(ctx: Any, id: int, img_id: int, query: str, out: Any, format: str, silent: bool) -> None:
     ctx.vlog(f"Get Image Action for Listing ID: {id} Image ID: {img_id}")
     etsy = ctx.get_etsy("LISTING-GET")
     if img_id > 0:
@@ -18,7 +19,8 @@ def get_listing_image(ctx: Any, id: int, img_id: int, query: str, out: Any, sile
         if query:
             res = jmespath.search(query, res)
         if out:
-            out.write(json.dumps(res, indent=4))
+            #out.write(json.dumps(res, indent=4))
+            listfileio.save_listing_file(ctx, res, None, format, out)
         if not silent:
             print(res)
     return
@@ -27,15 +29,21 @@ def get_listing_image(ctx: Any, id: int, img_id: int, query: str, out: Any, sile
 @click.option("-i", "--id", required=True, type=click.INT, help="Listing ID from which to retrieve the image.")
 @click.option("-ii", "--img-id", required=False, default=0, type=click.INT, help="Image ID to retrieve or, if omitted or 0, get all images.")
 @click.option("-q", "--query", type=click.STRING, help="JMESPath query to filter the output of the command.")
-@click.option("-o", "--out", required=False, type=click.File(mode="w", encoding="utf-8", errors="strict", lazy=None, atomic=False), help="Also output result into a file.")
+@click.option("-o", "--out", required=False, 
+              type=click.File(mode="w", encoding="utf-8", errors="strict", lazy=None, atomic=False), help="Also output result into a file.")
+@click.option("-F", "--format", required=False, default="JSON", 
+              type=click.Choice(["JSON", "YAML"], case_sensitive=False), multiple=False, help="Set format to JSON or YAML for output file.")
 @click.option("-S", "--silent", required=False, default=False, is_flag=True, help="Supress console output.")
 @pass_environment
-def cli(ctx, id, img_id, query, out, silent):
+def cli(ctx, id, img_id, query, out, format, silent):
     """Perform a GET IMAGE action on a listing by Listing ID and optional Image ID."""
+    result = 0
     ctx.check_auth("IMAGE-GET")
     if not id is None:
         ctx.vlog(f"Process GET Image Listing ID: {id} Image ID: {img_id}")
     try:
-        get_listing_image(ctx, id, img_id, query, out, silent)
+        get_listing_image(ctx, id, img_id, query, out, format, silent)
     except Exception as ex:
         ctx.log(f"Error processing command - {ex}")
+        result = 1
+    return result

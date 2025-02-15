@@ -1,35 +1,21 @@
-import json
-import yaml
 import click
-import hashlib
-import time
 import os
 
 from typing import Any, Dict, List, Optional
 from rich import print
-from etspi.util import sync
-from etspi.util import listfileio
+from etspi.util import sync, listfileio, pprint
 from etspi.cli import pass_environment, Environment
 from etspi.etsyv3 import EtsyAPI, Includes, ListingState, SortOn, SortOrder
 from etspi.etsyv3.models import CreateDraftListingRequest, UpdateListingRequest
 
 def import_listing(ctx: Any, id: int, out: Any, root: str, format: str, with_folder: bool = False) -> Dict:
-    listing = {}
-    listing_meta = { "listing_id": id, "images_hash": None, "listing_hash": None, "last_updated": int(time.time()) }
     etsy = ctx.get_etsy("SYNC-IMPORT")
     res = etsy.get_listing(id, [Includes.SHIPPING, Includes.IMAGES])
     res = UpdateListingRequest.generate_request_from_listing_response(res).get_dict()
+    listing = sync.Listing(id, res)
     if "image_ids" in res:
-        imgs_hash = sync.hash_list_data(res["image_ids"])
-        if imgs_hash:
-            listing_meta["images_hash"] = imgs_hash
-        listing["images"] = res["image_ids"]
+        listing.images = res["image_ids"]
         del res["image_ids"]
-    list_hash = sync.hash_list_data(res)
-    if list_hash:
-        listing_meta["listing_hash"] = list_hash
-    listing["listing"] = res
-    listing["meta"] = listing_meta
     if not out:
         if with_folder:
             fld_path = os.path.join(root, str(id))
@@ -37,15 +23,9 @@ def import_listing(ctx: Any, id: int, out: Any, root: str, format: str, with_fol
                 os.makedirs(fld_path)
         file_ext = "ejs" if format == "JSON" else "eyml"
         filename = os.path.join(root, os.path.join(str(id), f"{id}.{file_ext}") if with_folder else f"{id}.{file_ext}")
-        listfileio.save_listing_file(ctx, listing, filename, format)
-        # with open(filename, 'w', encoding="utf-8") as file:
-        #     if format == "YAML":
-        #         yaml.dump(listing, file, default_flow_style=False, allow_unicode=True, sort_keys=False)
-        #     else:
-        #         file.write(json.dumps(listing, indent=4))
+        listfileio.save_listing_file(ctx, listing.to_dict(), filename, format)
     else:
-        #out.write(json.dumps(listing, indent=4))
-        listfileio.save_listing_file(ctx, listing, None, format, out)
+        listfileio.save_listing_file(ctx, listing.to_dict(), None, format, out)
     return listing
 
 def sync_listing(ctx: Any, id: int, out: Any, root: str, format: str) -> None:
@@ -53,6 +33,7 @@ def sync_listing(ctx: Any, id: int, out: Any, root: str, format: str) -> None:
     try:
         if id:
             import_listing(ctx, id, out, root, format, False)
+            ctx.vlog(f"Successfully synced listing ID: {id}")
         else:
             raise Exception("Listing ID is not valid")
     except Exception as ex:
@@ -90,7 +71,7 @@ def sync_shop_section(ctx: Any, shop_id: int, section_id: List, state: str, root
                         ok_count += 1
                     except Exception as ex:
                         ctx.log(f"Error processing import listing ID: {l} - {ex}")
-                ctx.vlog(f"Successfully synced {ok_count} out of {len(listing_set)} listings for Shop ID: {shop_id} Section ID: {section_id}")
+                ctx.vlog(pprint.context_pprint(f"Successfully synced [green]{ok_count}[/green] out of [magenta]{len(listing_set)}[/magenta] listings for Shop ID: {shop_id} Section ID: {section_id}"))
         else:
             raise Exception("Shop ID is not valid")
     except Exception as ex:
@@ -107,8 +88,9 @@ def sync_shop_section(ctx: Any, shop_id: int, section_id: List, state: str, root
 @click.option("-F", "--format", required=False, default="JSON", type=click.Choice(["JSON", "YAML"], case_sensitive=False), multiple=False, help="Set export listing format to JSON or YAML.")
 #@click.option("-S", "--silent", required=False, default=False, is_flag=True, help="Supress console output.")
 @pass_environment
-def cli(ctx, id, section_id, shop_id, state, out, root_folder, format):
+def cli(ctx, id, section_id, shop_id, state, out, root_folder, format) -> int:
     """Perform a IMPORT action on a listing, shop section, or shop by IDs."""
+    result = 0
     ctx.check_auth("SYNC-IMPORT")
     try:
         ctx.vlog(f"Process SYNC-IMPORT")
@@ -123,3 +105,5 @@ def cli(ctx, id, section_id, shop_id, state, out, root_folder, format):
             raise Exception("No valid options provided for import")
     except Exception as ex:
         ctx.log(f"Error processing command - {ex}")
+        result = 1
+    return result

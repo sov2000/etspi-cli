@@ -31,6 +31,7 @@ def delete_listing_image(ctx: Any, id: int, shop_id: int, img_id: int, yes: bool
 @pass_environment
 def cli(ctx, id, shop_id, img_id, yes, silent):
     """Perform a Delete action on a listing by Listing and Image IDs."""
+    result = 0
     ctx.check_auth("IMAGE-DELETE")
     if not id is None:
         ctx.vlog(f"Process DELETE IMAGE listing: {id}")
@@ -38,3 +39,5 @@ def cli(ctx, id, shop_id, img_id, yes, silent):
         delete_listing_image(ctx, id, shop_id, img_id, yes, silent)
     except Exception as ex:
         ctx.log(f"Error processing command - {ex}")
+        result = 1
+    return result

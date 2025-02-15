@@ -31,6 +31,7 @@ def delete_listing_file(ctx: Any, id: int, shop_id: int, file_id: int, yes: bool
 @pass_environment
 def cli(ctx, id, shop_id, file_id, yes, silent):
     """Perform a Delete action on a listing by Listing and File IDs."""
+    result = 0
     ctx.check_auth("FILE-DELETE")
     if not id is None:
         ctx.vlog(f"Process DELETE FILE listing: {id}")
@@ -38,3 +39,5 @@ def cli(ctx, id, shop_id, file_id, yes, silent):
         delete_listing_file(ctx, id, shop_id, file_id, yes, silent)
     except Exception as ex:
         ctx.log(f"Error processing command - {ex}")
+        result = 1
+    return result

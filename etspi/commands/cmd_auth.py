@@ -141,7 +141,7 @@ def get_auth_directions(ctx: Any, auth_hlp: AuthHelper, rdr_url: str, scope_list
 @click.option("-tF", "--token-file", is_flag=True, default=False, help="Write out the tokens to the auth.env file.")
 @click.option("-tH", "--token-hidden", is_flag=True, default=False, help="Supress the output of the tokens to the console.")
 @pass_environment
-def cli(ctx: Any, host: Any, port: Any, certfile: Any, keyfile: Any, scope: Any, token_file: bool, token_hidden: bool) -> None:
+def cli(ctx: Any, host: Any, port: Any, certfile: Any, keyfile: Any, scope: Any, token_file: bool, token_hidden: bool) -> int:
     """Host local redirect endpoint and help guide through the authorization flow to obtain Etsy API token that is used with the API."""
     ctx.vlog(f"Loaded command module - AUTH")
     ctx.options["token-file"] = token_file
@@ -160,3 +160,4 @@ def cli(ctx: Any, host: Any, port: Any, certfile: Any, keyfile: Any, scope: Any,
             break
         time.sleep(0.2)
     httpd.shutdown()
+    return 0

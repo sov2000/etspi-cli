@@ -26,12 +26,13 @@ def upload_listing_video(ctx: Any, id: int, shop_id: int, src_file: Any, vid_id:
 @click.option("-i", "--id", required=True, type=click.INT, help="Listing ID to which apply action.")
 @click.option("-s", "--shop-id", required=True, type=click.INT, help="Shop ID to use for update and other actions.")
 @click.option("-f", "--src-file", required=False, help="Source video file from which to read content to upload.",
-              type=click.File(mode="rb", encoding="utf-8", errors="strict", lazy=None, atomic=False))
+              type=click.File(mode="rb", errors="strict", lazy=None, atomic=False))
 @click.option("-vi", "--vid-id", required=False, type=click.INT, help="Video ID to update for existing.")
 @click.option("-S", "--silent", required=False, default=False, is_flag=True, help="Suppress console output.")
 @pass_environment
 def cli(ctx, id, shop_id, src_file, vid_id, silent):
     """Upload a new video or Update existing video by Listing ID and Video ID."""
+    result = 0
     ctx.check_auth("VIDEO-UPLOAD")
     if not id is None:
         ctx.vlog(f"Process Upload or Update Video Listing ID: {id} Video ID: {vid_id}")
@@ -39,3 +40,5 @@ def cli(ctx, id, shop_id, src_file, vid_id, silent):
         upload_listing_video(ctx, id, shop_id, src_file, vid_id, silent)
     except Exception as ex:
         ctx.log(f"Error processing command - {ex}")
+        result = 1
+    return result

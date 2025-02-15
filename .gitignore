@@ -51,6 +51,8 @@ coverage.xml
 .pytest_cache/
 cover/
 test_files/
+test_scripts/
+test-cmds.cmd
 
 # Translations
 *.mo

@@ -29,6 +29,7 @@ def delete_listing(ctx: Any, id: int, yes: bool, silent: bool) -> None:
 @pass_environment
 def cli(ctx, id, yes, silent):
     """Perform a Delete action on a listing by its ID."""
+    result = 0
     ctx.check_auth("LISTING-DELETE")
     if not id is None:
         ctx.vlog(f"Process DELETE listing: {id}")
@@ -36,3 +37,5 @@ def cli(ctx, id, yes, silent):
         delete_listing(ctx, id, yes, silent)
     except Exception as ex:
         ctx.log(f"Error processing command - {ex}")
+        result = 1
+    return result

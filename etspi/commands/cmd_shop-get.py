@@ -5,10 +5,11 @@ import jmespath
 from typing import Any, Dict, List, Optional
 from rich import print
 from etspi.cli import pass_environment, Environment
+from etspi.util import listfileio, pprint
 from etspi.etsyv3 import EtsyAPI, Includes
 from etspi.etsyv3.models import UpdateListingPropertyRequest
 
-def get_shop_info(ctx: Any, shop_id: int, user_id: int, name: str, range: tuple, query: str, out: Any, silent: bool) -> None:
+def get_shop_info(ctx: Any, shop_id: int, user_id: int, name: str, range: tuple, query: str, out: Any, format: str, silent: bool) -> None:
     ctx.vlog(f"Get Shop information by ID: {shop_id}")
     etsy = ctx.get_etsy("SHOP-GET")
     if shop_id > 0:
@@ -26,7 +27,8 @@ def get_shop_info(ctx: Any, shop_id: int, user_id: int, name: str, range: tuple,
         if query:
             res = jmespath.search(query, res)
         if out:
-            out.write(json.dumps(res, indent=4))
+            #out.write(json.dumps(res, indent=4))
+            listfileio.save_listing_file(ctx, res, None, format, out)
         if not silent:
             print(res)
     return
@@ -37,15 +39,21 @@ def get_shop_info(ctx: Any, shop_id: int, user_id: int, name: str, range: tuple,
 @click.option("-n", "--name", required=False, type=click.STRING, default=None, help="Shop Name for which to retrieve shop info.")
 @click.option("-R", "--range", required=False, type=click.INT, nargs=2, help="Range of shop records to display from the name search, offset and limit.")
 @click.option("-q", "--query", type=click.STRING, help="JMESPath query to filter the output of the command.")
-@click.option("-o", "--out", required=False, type=click.File(mode="w", encoding="utf-8", errors="strict", lazy=None, atomic=False), help="Also output result into a file")
+@click.option("-o", "--out", required=False,
+              type=click.File(mode="w", encoding="utf-8", errors="strict", lazy=None, atomic=False), help="Also output result into a file")
+@click.option("-F", "--format", required=False, default="JSON", 
+              type=click.Choice(["JSON", "YAML"], case_sensitive=False), multiple=False, help="Set format to JSON or YAML for output file.")
 @click.option("-S", "--silent", required=False, default=False, is_flag=True, help="Supress console output.")
 @pass_environment
-def cli(ctx, shop_id, user_id, name, range, query, out, silent):
+def cli(ctx, shop_id, user_id, name, range, query, out, format, silent):
     """Perform a GET Shop action by Shop or User ID."""
+    result = 0
     ctx.check_auth("SHOP-GET")
     if not shop_id is None:
         ctx.vlog(f"Process GET shop info: {shop_id}")
     try:
-        get_shop_info(ctx, shop_id, user_id, name, range, query, out, silent)
+        get_shop_info(ctx, shop_id, user_id, name, range, query, out, format, silent)
     except Exception as ex:
         ctx.log(f"Error processing command - {ex}")
+        result = 1
+    return result

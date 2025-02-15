@@ -28,7 +28,7 @@ def upload_listing_image(ctx: Any, id: int, shop_id: int, src_file: Any, img_id:
 @click.option("-i", "--id", required=True, type=click.INT, help="Listing ID to which apply action.")
 @click.option("-s", "--shop-id", required=True, type=click.INT, help="Shop ID to use for update and other actions.")
 @click.option("-f", "--src-file", required=False, help="Source image file from which to read content to upload.",
-              type=click.File(mode="rb", encoding="utf-8", errors="strict", lazy=None, atomic=False))
+              type=click.File(mode="rb", errors="strict", lazy=None, atomic=False))
 @click.option("-ii", "--img-id", required=False, default=1, type=click.INT, help="Image ID to update for existing.")
 @click.option("-r", "--rank", required=False, default=1, type=click.INT, help="Image rank to upload or update.")
 @click.option("-O", "--overwrite", required=False, default=False, is_flag=True, help="Overwrite file flag to replace existing image.")
@@ -38,6 +38,7 @@ def upload_listing_image(ctx: Any, id: int, shop_id: int, src_file: Any, img_id:
 @pass_environment
 def cli(ctx, id, shop_id, src_file, img_id, rank, overwrite, watermark, alt_text, silent):
     """Upload a new image or Update existing image by Listing ID and Image ID."""
+    result = 0
     ctx.check_auth("IMAGE-UPLOAD")
     if not id is None:
         ctx.vlog(f"Process Upload or Update Image Listing ID: {id} Image ID: {img_id}")
@@ -45,3 +46,5 @@ def cli(ctx, id, shop_id, src_file, img_id, rank, overwrite, watermark, alt_text
         upload_listing_image(ctx, id, shop_id, src_file, img_id, rank, overwrite, watermark, alt_text, silent)
     except Exception as ex:
         ctx.log(f"Error processing command - {ex}")
+        result = 1
+    return result
