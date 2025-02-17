@@ -426,7 +426,9 @@ class UpdateListingImageIDRequest(Request):
 
 
 class UpdateListingPropertyRequest(Request):
-    nullable: List[str] = []
+    nullable: List[str] = [
+        "property_id"
+    ]
 
     mandatory: List[str] = [
         "value_ids",
@@ -438,10 +440,12 @@ class UpdateListingPropertyRequest(Request):
         value_ids: Optional[List[int]] = None,
         values: Optional[List[str]] = None,
         scale_id: Optional[int] = None,
+        property_id: Optional[int] = None,
     ):
         self.value_ids = value_ids
         self.values = values
         self.scale_id = scale_id
+        self.property_id = property_id
         super().__init__(
             nullable=UpdateListingPropertyRequest.nullable,
             mandatory=UpdateListingPropertyRequest.mandatory,
@@ -449,12 +453,14 @@ class UpdateListingPropertyRequest(Request):
     
     @staticmethod
     def generate_request_from_listing_property_response(
-        response: Dict[str, Any]
+        response: Dict[str, Any],
+        property_id: Optional[int] = None
     ) -> UpdateListingPropertyRequest:
         return UpdateListingPropertyRequest(
             value_ids = response["value_ids"],
             values = response["values"],
             scale_id = response["scale_id"],
+            property_id = property_id
         )
 
 class UpdateListingTranslationRequest(Request):

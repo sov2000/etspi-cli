@@ -22,13 +22,15 @@ def get_listing_props(ctx: Any, id: int, shop_id: int, prop_id: int, query: str,
             res = UpdateListingPropertyRequest.generate_request_from_listing_property_response(res).get_dict()
     elif shop_id > 0:
         res = etsy.get_listing_properties(shop_id, id)
+        if res and transform == "update":
+            prop_list = [UpdateListingPropertyRequest.generate_request_from_listing_property_response(r, r["property_id"]).get_dict() for r in res['results']]
+            res = { "properties": prop_list }
     else:
         raise click.BadArgumentUsage("No Shop ID or Property Id provided to retrieve listing property(ies).") 
     if res:
         if query:
             res = jmespath.search(query, res)
         if out:
-            #out.write(json.dumps(res, indent=4))
             listfileio.save_listing_file(ctx, res, None, format, out)
         if not silent:
             print(res)

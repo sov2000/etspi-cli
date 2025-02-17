@@ -19,7 +19,6 @@ def get_listing_video(ctx: Any, id: int, vid_id: int, query: str, out: Any, form
         if query:
             res = jmespath.search(query, res)
         if out:
-            #out.write(json.dumps(res, indent=4))
             listfileio.save_listing_file(ctx, res, None, format, out)
         if not silent:
             print(res)

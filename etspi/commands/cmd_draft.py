@@ -10,7 +10,7 @@ from etspi.util import listfileio, pprint
 from etspi.etsyv3 import EtsyAPI, Includes
 from etspi.etsyv3.models import CreateDraftListingRequest
 
-def draft_listing(ctx: Any, shop_id: int, src_file: Any, format: str, silent: bool) -> None:
+def draft_listing(ctx: Any, shop_id: int, src_file: Any, format: str, listing_id: bool, silent: bool) -> None:
     #pld = json.load(src_file)
     pld = listfileio.load_listing_file(ctx, None, format, src_file)
     etsy = ctx.get_etsy("DRAFT")
@@ -18,9 +18,12 @@ def draft_listing(ctx: Any, shop_id: int, src_file: Any, format: str, silent: bo
         pld["listing_type"] = pld["type"]
         del(pld["type"])
     listing = CreateDraftListingRequest(**pld)
-    res = etsy.create_draft_listing(shop_id, listing)
+    res = etsy.create_draft_listing(shop_id, listing) 
     if not silent:
-        print(res)
+        if listing_id:
+            print(res["listing_id"])
+        else:
+            print(res)
     return
 
 @click.command("draft", short_help="Retrieve listing by ID")
@@ -29,16 +32,17 @@ def draft_listing(ctx: Any, shop_id: int, src_file: Any, format: str, silent: bo
               type=click.File(mode="r", encoding="utf-8", errors="strict", lazy=None, atomic=False))
 @click.option("-F", "--format", required=False, default="JSON", 
               type=click.Choice(["JSON", "YAML"], case_sensitive=False), multiple=False, help="Set format to JSON or YAML for input file.")
+@click.option("-I", "--listing-id", required=False, default=False, is_flag=True, help="If successful only print new draft Id.")
 @click.option("-S", "--silent", required=False, default=False, is_flag=True, help="Supress console output")
 @pass_environment
-def cli(ctx, shop_id, src_file, format, silent) -> int:
+def cli(ctx, shop_id, src_file, format, listing_id, silent) -> int:
     """Create a new listing draft."""
     result = 0
     ctx.check_auth("DRAFT")
     if not shop_id is None and not src_file is None:
-        ctx.vlog(f"Create draft listing: {shop_id} from {src_file}")
+        ctx.vlog(f"Create draft listing for {shop_id}")
     try:
-        draft_listing(ctx, shop_id, src_file, format, silent)
+        draft_listing(ctx, shop_id, src_file, format, listing_id, silent)
     except Exception as ex:
         ctx.log(f"Error processing command - {ex}")
         result = 1

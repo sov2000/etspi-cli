@@ -13,8 +13,22 @@ def update_listing_props(ctx: Any, id: int, shop_id: int, prop_id: int, src_file
     #pld = json.load(src_file)
     pld = listfileio.load_listing_file(ctx, None, format, src_file)
     etsy = ctx.get_etsy("PROP-UPDATE")
-    prop = UpdateListingPropertyRequest(**pld)
-    res = etsy.update_listing_property(shop_id, id, prop_id, prop)
+    if prop_id > 0 and not "property_id" in pld:
+        prop = UpdateListingPropertyRequest(**pld)
+        res = etsy.update_listing_property(shop_id, id, prop_id, prop)
+    elif "properties" in pld:
+        rr_list = []
+        for p in pld["properties"]:
+            pp_id = p.get("property_id", 0)
+            if pp_id > 0:
+                prop = UpdateListingPropertyRequest(
+                    value_ids = p.get("value_ids", None),
+                    values = p.get("values", None),
+                    scale_id = p.get("scale_id", None))
+                rr_list.append(etsy.update_listing_property(shop_id, id, pp_id, prop))
+        res = { "results": rr_list }
+    else:
+        raise click.BadArgumentUsage("Invalid file format for provided arguments.")
     if not silent:
         print(res)
     return
@@ -22,7 +36,7 @@ def update_listing_props(ctx: Any, id: int, shop_id: int, prop_id: int, src_file
 @click.command("prop-update", short_help="Update listing Property by Listing ID and Property ID")
 @click.option("-i", "--id", required=True, type=click.INT, help="Listing ID to which apply action.")
 @click.option("-s", "--shop-id", required=True, default=0, type=click.INT, help="Shop ID to use to update Property ID specified.")
-@click.option("-pi", "--prop-id", required=True, default=0, type=click.INT, help="Listing Property ID to update.")
+@click.option("-pi", "--prop-id", required=False, default=0, type=click.INT, help="Listing Property ID to update.")
 @click.option("-f", "--src-file", required=True, help="Source file from which to read JSON to update property.",
               type=click.File(mode="r", encoding="utf-8", errors="strict", lazy=None, atomic=False))
 @click.option("-F", "--format", required=False, default="JSON", 

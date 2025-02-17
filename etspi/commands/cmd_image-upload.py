@@ -7,21 +7,24 @@ from etspi.etsyv3 import EtsyAPI, Includes
 from etspi.etsyv3.models import UploadListingImageRequest, UpdateListingImageIDRequest
 
 def upload_listing_image(ctx: Any, id: int, shop_id: int, src_file: Any, img_id: int, rank: int,
-                        overwrite: bool, watermark: bool, alt_text: str, silent: bool) -> None:
+                        overwrite: bool, watermark: bool, alt_text: str, new_image_id: bool, silent: bool) -> None:
     ctx.vlog(f"Upload or Update Image Action for Listing ID: {id} Image ID {img_id}")
     etsy = ctx.get_etsy("LISTING-UPDATE")
-    if not src_file is None:
+    if src_file:
         img_content = src_file.read()
         listing_img = UploadListingImageRequest(image_bytes=img_content, listing_image_id=img_id, rank=rank, overwrite=overwrite, 
                                                 is_watermarked=watermark, alt_text=alt_text)
-    elif not img_id is None:
+    elif img_id:
         listing_img = UpdateListingImageIDRequest(listing_image_id=img_id, rank=rank, overwrite=overwrite,
                                                 is_watermarked=watermark, alt_text=alt_text)
     else:
         raise click.BadArgumentUsage("No Source File or Image Id provided for upload or update.")
     res = etsy.update_listing_image_id(shop_id, id, listing_img) 
     if not silent:
-        print(res)
+        if new_image_id:
+            print(res["listing_image_id"])
+        else:
+            print(res)
     return
 
 @click.command("image-upload", short_help="Upload a new listing image or update by Image ID")
@@ -34,16 +37,17 @@ def upload_listing_image(ctx: Any, id: int, shop_id: int, src_file: Any, img_id:
 @click.option("-O", "--overwrite", required=False, default=False, is_flag=True, help="Overwrite file flag to replace existing image.")
 @click.option("-W", "--watermark", required=False, default=False, is_flag=True, help="Set to indicate image has a watermark.")
 @click.option("-a", "--alt-text", required=False, default="", type=click.STRING, help="Image ALT Text to set upon upload or update.")
+@click.option("-I", "--new-image-id", required=False, default=False, is_flag=True, help="If successful only print new image Id.")
 @click.option("-S", "--silent", required=False, default=False, is_flag=True, help="Supress console output.")
 @pass_environment
-def cli(ctx, id, shop_id, src_file, img_id, rank, overwrite, watermark, alt_text, silent):
+def cli(ctx, id, shop_id, src_file, img_id, rank, overwrite, watermark, alt_text, new_image_id, silent):
     """Upload a new image or Update existing image by Listing ID and Image ID."""
     result = 0
     ctx.check_auth("IMAGE-UPLOAD")
     if not id is None:
         ctx.vlog(f"Process Upload or Update Image Listing ID: {id} Image ID: {img_id}")
     try:
-        upload_listing_image(ctx, id, shop_id, src_file, img_id, rank, overwrite, watermark, alt_text, silent)
+        upload_listing_image(ctx, id, shop_id, src_file, img_id, rank, overwrite, watermark, alt_text, new_image_id, silent)
     except Exception as ex:
         ctx.log(f"Error processing command - {ex}")
         result = 1

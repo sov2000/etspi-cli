@@ -31,11 +31,10 @@ def import_listing(ctx: Any, id: int, out: Any, root: str, format: str, with_fol
 def sync_listing(ctx: Any, id: int, out: Any, root: str, format: str) -> None:
     ctx.vlog(f"Sync Action for Listing ID: {id}")
     try:
-        if id:
-            import_listing(ctx, id, out, root, format, False)
-            ctx.vlog(f"Successfully synced listing ID: {id}")
-        else:
-            raise Exception("Listing ID is not valid")
+        if not id:
+            raise Exception("Listing ID is not valid")               
+        import_listing(ctx, id, out, root, format, False)
+        ctx.vlog(f"Successfully synced listing ID: {id}")
     except Exception as ex:
         ctx.log(f"Error processing import listing ID: {id} - {ex}")
     return
@@ -47,33 +46,32 @@ def sync_shop_section(ctx: Any, shop_id: int, section_id: List, state: str, root
         offset = 0
         listing_set = []
         etsy = ctx.get_etsy("SYNC-IMPORT")
-        if shop_id:
-            while True:
-                if shop_id and section_id:
-                    res = etsy.get_listings_by_shop_section_id(shop_id, section_id, 100, offset, SortOn.CREATED, SortOrder.DESC)
-                else:
-                    res = etsy.get_listings_by_shop(shop_id, state, 100, offset, SortOn.CREATED, SortOrder.DESC, None)
-                if res:
-                    listing_count = res["count"]
-                    r = [x["listing_id"] for x in res["results"]]
-                    listing_set.extend(r)
-                    offset += 100
-                else:
-                    break
-                if offset >= listing_count:
-                    break
-            if listing_set:
-                ok_count = 0
-                for l in listing_set:
-                    try:
-                        import_listing(ctx, l, None, root, format, with_folder = True)
-                        ctx.vlog(f"Successfully synced listing ID: {l}")
-                        ok_count += 1
-                    except Exception as ex:
-                        ctx.log(f"Error processing import listing ID: {l} - {ex}")
-                ctx.vlog(pprint.context_pprint(f"Successfully synced [green]{ok_count}[/green] out of [magenta]{len(listing_set)}[/magenta] listings for Shop ID: {shop_id} Section ID: {section_id}"))
-        else:
-            raise Exception("Shop ID is not valid")
+        if not shop_id:
+            raise Exception("Shop ID is not valid")        
+        while True:
+            if shop_id and section_id:
+                res = etsy.get_listings_by_shop_section_id(shop_id, section_id, 100, offset, SortOn.CREATED, SortOrder.DESC)
+            else:
+                res = etsy.get_listings_by_shop(shop_id, state, 100, offset, SortOn.CREATED, SortOrder.DESC, None)
+            if res:
+                listing_count = res["count"]
+                r = [x["listing_id"] for x in res["results"]]
+                listing_set.extend(r)
+                offset += 100
+            else:
+                break
+            if offset >= listing_count:
+                break
+        if listing_set:
+            ok_count = 0
+            for l in listing_set:
+                try:
+                    import_listing(ctx, l, None, root, format, with_folder = True)
+                    ctx.vlog(pprint.context_pprint(f"[green bold]IMPORTED[/green bold] - Successfully synced listing ID: {l}"))
+                    ok_count += 1
+                except Exception as ex:
+                    ctx.log(pprint.context_pprint(f"[red bold]FAIL[/red bold] - Error processing import listing ID: {l} - {ex}"))
+            ctx.vlog(pprint.context_pprint(f"Successfully synced [green]{ok_count}[/green] out of [magenta]{len(listing_set)}[/magenta] listings for Shop ID: {shop_id} Section ID: {section_id}"))
     except Exception as ex:
         ctx.log(f"Error processing import for shop ID: {shop_id} section ID: {section_id} - {ex}")
     return
@@ -95,12 +93,12 @@ def cli(ctx, id, section_id, shop_id, state, out, root_folder, format) -> int:
     try:
         ctx.vlog(f"Process SYNC-IMPORT")
         sts = ListingState(state) if state else None
-        if shop_id and section_id:
+        if id and shop_id:
+            sync_listing(ctx, id, out, root_folder, format)
+        elif section_id and shop_id:
             sync_shop_section(ctx, shop_id, section_id, sts, root_folder, format)
         elif shop_id:
             sync_shop_section(ctx, shop_id, None, sts, root_folder, format)
-        elif id:
-            sync_listing(ctx, id, out, root_folder, format)
         else:
             raise Exception("No valid options provided for import")
     except Exception as ex:

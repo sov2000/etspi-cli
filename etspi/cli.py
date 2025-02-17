@@ -63,7 +63,7 @@ class Environment:
         if args:
             msg %= args
         ts = datetime.datetime.now().strftime("%H:%M:%S")
-        click.echo(f"[{ts}] {msg}", file=sys.stderr)
+        click.echo(f"[{ts}] {msg.rstrip()}", file=sys.stderr)
 
     def vlog(self, msg: str, *args: list) -> None:
         if self.verbose:
