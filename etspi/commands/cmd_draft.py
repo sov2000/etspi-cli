@@ -11,14 +11,15 @@ from etspi.etsyv3 import EtsyAPI, Includes
 from etspi.etsyv3.models import CreateDraftListingRequest
 
 def draft_listing(ctx: Any, shop_id: int, src_file: Any, format: str, listing_id: bool, silent: bool) -> None:
-    #pld = json.load(src_file)
     pld = listfileio.load_listing_file(ctx, None, format, src_file)
     etsy = ctx.get_etsy("DRAFT")
     if "type" in pld:
         pld["listing_type"] = pld["type"]
         del(pld["type"])
     listing = CreateDraftListingRequest(**pld)
-    res = etsy.create_draft_listing(shop_id, listing) 
+    res = etsy.create_draft_listing(shop_id, listing)
+    if listing_id:
+        ctx.options["last_new_id"] = res["listing_id"]
     if not silent:
         if listing_id:
             print(res["listing_id"])

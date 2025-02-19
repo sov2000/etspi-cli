@@ -14,12 +14,16 @@ def setup_stage_folder(root: str) -> str:
     if not os.path.exists(directory_path):
         os.makedirs(directory_path)
     # scan directory_path for all files and subdirectories and remove them all
-    for item in os.listdir(directory_path):
-        item_path = os.path.join(directory_path, item)
-        if os.path.isfile(item_path):
-            os.remove(item_path)
-        # else:
-        #     os.rmdir(item_path)
+    dir_items = listfileio.scan_local_root(directory_path, ["*.*"])
+    for item in dir_items:
+        if os.path.isfile(item):
+            os.remove(item)
+    # for item in os.listdir(directory_path):
+    #     item_path = os.path.join(directory_path, item)
+    #     if os.path.isfile(item_path):
+    #         os.remove(item_path)
+    #     # else:
+    #     #     os.rmdir(item_path)
     return directory_path
 
 def get_stage_file(ctx: Any, operation: str, id: int) -> str:
@@ -32,13 +36,27 @@ def stage_create_listing(ctx: Any, src_file: str, indx: int, shop_id: int, listi
     stage_file = get_stage_file(ctx, "draft", indx)
     listfileio.save_listing_file(ctx, listing, stage_file)
     return sync.SyncOperation(src_file=src_file, operation="draft", params={
-        "shop_id": shop_id, "src_file": stage_file, "silent": True
+        "shop_id": shop_id, "src_file": stage_file, "listing_id": True, "silent": True
         }).to_dict()
 
 def stage_update_listing(ctx: Any, src_file: str, id: int, shop_id: int, listing: Any) -> sync.SyncOperation:
-    stage_file = get_stage_file(ctx, "update", id)
+    stage_file = get_stage_file(ctx, "listing-update", id)
     listfileio.save_listing_file(ctx, listing, stage_file)
     return sync.SyncOperation(src_file=src_file, operation="listing-update", params={
+        "id": id, "shop_id": shop_id, "src_file": stage_file, "silent": True
+        }).to_dict()
+
+def stage_update_listing_inventory(ctx: Any, src_file: str, id: int, shop_id: int, inventory: Any) -> sync.SyncOperation:
+    stage_file = get_stage_file(ctx, "listing-update-iv", id)
+    listfileio.save_listing_file(ctx, inventory, stage_file)
+    return sync.SyncOperation(src_file=src_file, operation="listing-update-iv", params={
+        "id": id, "src_file": stage_file, "silent": True
+        }).to_dict()
+
+def stage_update_listing_properties(ctx: Any, src_file: str, id: int, shop_id: int, properties: Any) -> sync.SyncOperation:
+    stage_file = get_stage_file(ctx, "prop-update", id)
+    listfileio.save_listing_file(ctx, properties, stage_file)
+    return sync.SyncOperation(src_file=src_file, operation="prop-update", params={
         "id": id, "shop_id": shop_id, "src_file": stage_file, "silent": True
         }).to_dict()
 
@@ -50,29 +68,47 @@ def plan_listing_sync(ctx: Any, shop_id: int, root: str, fmt_list: List) -> None
     draft_indx = 0
     for file in listing_files:
         try:
+            unchng = True
             listing = listfileio.load_listing_file(ctx, file)
-            if listing:
-                listing_data = listing.get("listing", {})
-                listing_meta = listing.get("meta", {})
-                if listing_meta:
-                    id = listing_meta.get("listing_id", 0)
-                    if id:
-                        list_hash = sync.hash_list_data(listing_data)
-                        if list_hash != listing_meta.get("listing_hash", ""):
-                            ctx.vlog(f"UPDATED - Listing {id} found in file {file} queued for update.")
-                            list_ops.append(stage_update_listing(ctx, file, id, shop_id, listing_data))
-                        else:
-                            ctx.vlog(f"UNCHANGED - Listing {id} found in file {file} skipped.")
-                    else:
-                        ctx.vlog(f"NEW - Listing found in file {file} queued for creation.")
-                        list_ops.append(stage_create_listing(ctx, file, draft_indx, shop_id, listing_data))
-                        draft_indx += 1
+            if not listing:
+                raise Exception(f"Invalid listing file {file}")
+            listing_data = listing.get("listing", None)
+            if not listing_data:
+                raise Exception(f"Missing listing data in file {file}")
+            listing_meta = listing.get("meta", None)
+            if not listing_meta:
+                raise Exception(f"Missing meta data in file {file}")
+            id = listing_meta.get("listing_id", 0)
+            list_hash = sync.hash_list_data(listing_data)
+            if list_hash != listing_meta.get("listing_hash", ""):
+                if id:
+                    ctx.vlog(pprint.context_pprint(f"[cyan bold]UPDATED[/cyan bold] - Listing {id} in file {file} - [green]queued[/green]"))
+                    list_ops.append(stage_update_listing(ctx, file, id, shop_id, listing_data))
+                else:
+                    ctx.vlog(pprint.context_pprint(f"[green bold]NEW[/green bold] - Listing in file {file} - [green]queued[/green]"))
+                    list_ops.append(stage_create_listing(ctx, file, draft_indx, shop_id, listing_data))
+                    draft_indx += 1
+                unchng = False
+            inv_data = listing.get("inventory", None)
+            if inv_data and sync.hash_list_data(inv_data) != listing_meta.get("inventory_hash", ""):
+                ctx.vlog(pprint.context_pprint(f"[cyan bold]UPDATED[/cyan bold] - Inventory {id} in file {file} - [green]queued[/green]"))
+                list_ops.append(stage_update_listing_inventory(ctx, file, id, shop_id, inv_data))
+                unchng = False
+            prp_data = listing.get("properties", None)
+            if prp_data and sync.hash_list_data(prp_data) != listing_meta.get("properties_hash", "") and len(listing_meta.get("properties_item_hashes", [])) == len(prp_data):
+                prp_data_chg = [prp for prp, hash in zip(prp_data, listing_meta["properties_item_hashes"]) if sync.hash_list_data(prp) != hash]
+                if len(prp_data_chg) > 0:
+                    list_ops.append(stage_update_listing_properties(ctx, file, id, shop_id, prp_data_chg))
+                    ctx.vlog(pprint.context_pprint(f"[cyan bold]UPDATED[/cyan bold] - Properties {len(prp_data_chg)} items {id} in file {file} - [green]queued[/green]"))
+                    unchng = False
+            if unchng:
+                ctx.vlog(pprint.context_pprint(f"[yellow bold]UNCHANGED[/yellow bold] - Listing {id} in file {file} - [yellow]skipped[/yellow]"))                
         except Exception as ex:
             ctx.log(f"Error processing listing file {file} - {ex}")
             continue
     new_llist_ctn = sum([1 for o in list_ops if o["operation"] == "draft"])
-    upd_llist_ctn = sum([1 for o in list_ops if o["operation"] == "listing-update"])
-    ctx.vlog(pprint.context_pprint(f"Found [green]{new_llist_ctn}[/green] new listings and [yellow]{upd_llist_ctn}[/yellow] listings to update."))
+    upd_llist_ctn = sum([1 for o in list_ops if o["operation"] in ["listing-update", "listing-update-iv"]])
+    ctx.vlog(pprint.context_pprint(f"Found [green]{new_llist_ctn}[/green] new listings and [yellow]{upd_llist_ctn}[/yellow] listing updates."))
     if len(list_ops) > 0:
         stage_file = os.path.join(ctx.options["stage_fldr"], "plan.json")
         with open(stage_file, "w", encoding="utf-8") as file:

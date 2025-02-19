@@ -23,9 +23,10 @@ def load_listing_file(ctx: Any, file: str, format: str = "JSON", stream: Any = N
 def save_listing_file(ctx: Any, listing: Dict, file: str = None, format: str = "JSON", stream: Any = None) -> None:
     if listing:
         f = stream
+        base_name, ext = os.path.splitext(file) if file else ("", "")
         if stream is None:
             f = open(file, 'w', encoding="utf-8")
-        if format == "YAML":
+        if format == "YAML" or ext in [".eyml", ".eyaml", ".yaml", ".yml"]:
             yaml.dump(listing, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
         else:
             f.write(json.dumps(listing, indent=4))

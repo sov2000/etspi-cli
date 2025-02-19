@@ -60,6 +60,14 @@ def find_and_open_src_files(ctx: Any, ops: str, params: Dict) -> Dict:
             params[key] = file
     return params
 
+# load listing file from src_file and update meta listing_id with the new_id value
+def update_src_file_listing_id(ctx: Any, src_file: str, new_id: int) -> None:
+    listing = listfileio.load_listing_file(ctx, src_file)
+    if listing:
+        listing["meta"]["listing_id"] = new_id
+        listfileio.save_listing_file(ctx, listing, src_file)
+    return
+
 def push_listing_sync(ctx: Any, root: str, no_preview: bool, silent: bool) -> None:
     ctx.vlog(f"Push Listing Updates from local plan file staged in: {root}")
     listing_ops = get_operations_from_plan(ctx, root)
@@ -72,6 +80,7 @@ def push_listing_sync(ctx: Any, root: str, no_preview: bool, silent: bool) -> No
         ok_cnt = 0
         ctx.vlog(f"Pushing Listing Updates from Plan")
         cmd_cache = {}
+        list_id_cache = {}
         for op in listing_ops:
             cmd = cmd_cache.get(op['operation'], None)
             if not cmd:
@@ -79,6 +88,9 @@ def push_listing_sync(ctx: Any, root: str, no_preview: bool, silent: bool) -> No
                 cmd_cache[op['operation']] = cmd
             if cmd:
                 cc = click.get_current_context()
+                last_id = ctx.options.get("last_new_id", 0)
+                if "id" in op['params'] and op['params']['id'] == 0:
+                    op['params']['id'] = list_id_cache.get(op['src_file'], 0)
                 if "src_file" in op['params']:
                     op['params'] = find_and_open_src_files(ctx, op['operation'], op['params'])
                     with op['params']['src_file']:
@@ -90,8 +102,17 @@ def push_listing_sync(ctx: Any, root: str, no_preview: bool, silent: bool) -> No
                     status = "[green bold]OK[/green bold]"
                 else:
                     status = "[red bold]ERROR[/red bold]"
+                if last_id != ctx.options.get("last_new_id", 0):
+                    list_id_cache[op['src_file']] = ctx.options["last_new_id"]
                 if not silent:
                     ctx.echo(pprint.context_pprint(f"[yellow bold]FILE:[/yellow bold] {op['src_file']} [red bold]=>[/red bold] [yellow bold]OPS:[/yellow bold] [magenta bold]{op['operation']}[/magenta bold] - [yellow bold]RESULT:[/yellow bold] {status}"))
+        if list_id_cache.items():
+            for src_file, new_id in list_id_cache.items():
+                try:
+                    update_src_file_listing_id(ctx, src_file, new_id)
+                    ctx.vlog(f"Updated listing ID in file {src_file} to {new_id}")
+                except Exception as ex:
+                    ctx.log(f"Error updating listing ID in file {src_file} - {ex}")
         tot_cnt = len(listing_ops)
         err_cnt = tot_cnt - ok_cnt
         ctx.vlog(pprint.context_pprint(f"Success: [green]{ok_cnt}[/green] Errored: [red]{err_cnt}[/red] Total: [magenta]{tot_cnt}[/magenta]"))

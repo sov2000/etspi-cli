@@ -6,16 +6,25 @@ from rich import print
 from etspi.util import sync, listfileio, pprint
 from etspi.cli import pass_environment, Environment
 from etspi.etsyv3 import EtsyAPI, Includes, ListingState, SortOn, SortOrder
-from etspi.etsyv3.models import CreateDraftListingRequest, UpdateListingRequest
+from etspi.etsyv3.models import CreateDraftListingRequest, UpdateListingRequest, UpdateListingInventoryRequest, UpdateListingPropertyRequest
 
-def import_listing(ctx: Any, id: int, out: Any, root: str, format: str, with_folder: bool = False) -> Dict:
+def import_listing(ctx: Any, shop_id: int, id: int, out: Any, root: str, format: str, with_folder: bool = False) -> Dict:
     etsy = ctx.get_etsy("SYNC-IMPORT")
-    res = etsy.get_listing(id, [Includes.SHIPPING, Includes.IMAGES])
-    res = UpdateListingRequest.generate_request_from_listing_response(res).get_dict()
-    listing = sync.Listing(id, res)
-    if "image_ids" in res:
-        listing.images = res["image_ids"]
-        del res["image_ids"]
+    res = etsy.get_listing(id, [Includes.SHIPPING, Includes.IMAGES, Includes.INVENTORY])
+    prp = etsy.get_listing_properties(shop_id, id)
+    lst = UpdateListingRequest.generate_request_from_listing_response(res).get_dict()
+    listing = sync.Listing(id, lst)
+    if "images" in res:
+        lst_imgs = []
+        res_imgs = res.get("images", [])
+        for img in res_imgs:
+            lst_imgs.append(sync.ListingImageRequest.generate_request_from_image_response(img).get_dict())
+        listing.images = lst_imgs
+    if "inventory" in res:
+        inv = UpdateListingInventoryRequest.generate_request_from_inventory_response(res["inventory"]).get_dict()
+        listing.inventory = inv
+    if prp:
+        listing.properties = [UpdateListingPropertyRequest.generate_request_from_listing_property_response(r, r["property_id"]).get_dict() for r in prp['results']]
     if not out:
         if with_folder:
             fld_path = os.path.join(root, str(id))
@@ -28,12 +37,12 @@ def import_listing(ctx: Any, id: int, out: Any, root: str, format: str, with_fol
         listfileio.save_listing_file(ctx, listing.to_dict(), None, format, out)
     return listing
 
-def sync_listing(ctx: Any, id: int, out: Any, root: str, format: str) -> None:
+def sync_listing(ctx: Any, shop_id: int, id: int, out: Any, root: str, format: str) -> None:
     ctx.vlog(f"Sync Action for Listing ID: {id}")
     try:
         if not id:
-            raise Exception("Listing ID is not valid")               
-        import_listing(ctx, id, out, root, format, False)
+            raise Exception("Listing ID is not valid")
+        import_listing(ctx, shop_id, id, out, root, format, False)
         ctx.vlog(f"Successfully synced listing ID: {id}")
     except Exception as ex:
         ctx.log(f"Error processing import listing ID: {id} - {ex}")
@@ -66,7 +75,7 @@ def sync_shop_section(ctx: Any, shop_id: int, section_id: List, state: str, root
             ok_count = 0
             for l in listing_set:
                 try:
-                    import_listing(ctx, l, None, root, format, with_folder = True)
+                    import_listing(ctx, shop_id, l, None, root, format, with_folder = True)
                     ctx.vlog(pprint.context_pprint(f"[green bold]IMPORTED[/green bold] - Successfully synced listing ID: {l}"))
                     ok_count += 1
                 except Exception as ex:
@@ -79,7 +88,7 @@ def sync_shop_section(ctx: Any, shop_id: int, section_id: List, state: str, root
 @click.command("sync-import", short_help="Import listings by ID, Section, or Shop for future sync commands.")
 @click.option("-i", "--id", required=False, type=click.INT, help="Listing ID to which apply action.")
 @click.option("-si", "--section-id", required=False, type=click.INT, default=None, help="Shop Section ID for which to retrieve listings.", multiple=True)
-@click.option("-s", "--shop-id", required=False, type=click.INT, default=0, help="Shop ID for which to retrieve listings.")
+@click.option("-s", "--shop-id", required=True, type=click.INT, help="Shop ID for which to retrieve listings.")
 @click.option("-st", "--state", required=False, default=ListingState.ACTIVE.value, type=click.Choice([ListingState.ACTIVE.value, ListingState.INACTIVE.value, ListingState.SOLD_OUT.value, ListingState.DRAFT.value, ListingState.EXPIRED.value], case_sensitive=False), multiple=False)
 @click.option("-o", "--out", required=False, type=click.File(mode="w", encoding="utf-8", errors="strict", lazy=None, atomic=False), help="Output result into specified file")
 @click.option("-R", "--root-folder", required=False, type=click.STRING, default=".", help="Set root folder for import operation.")
