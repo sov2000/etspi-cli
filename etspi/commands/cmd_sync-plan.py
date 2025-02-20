@@ -1,6 +1,11 @@
 import json
 import click
 import os
+import random
+import string
+import requests
+import shutil
+import itertools
 
 from typing import Any, Dict, List, Optional
 from rich import print
@@ -9,28 +14,23 @@ from etspi.cli import pass_environment, Environment
 from etspi.etsyv3 import EtsyAPI, Includes, ListingState, SortOn, SortOrder
 from etspi.etsyv3.models import CreateDraftListingRequest, UpdateListingRequest
 
-def setup_stage_folder(root: str) -> str:
+def setup_stage_folder(ctx: Any, root: str) -> str:
     directory_path = os.path.join(root, ".etspi_stage")
     if not os.path.exists(directory_path):
         os.makedirs(directory_path)
     # scan directory_path for all files and subdirectories and remove them all
-    dir_items = listfileio.scan_local_root(directory_path, ["*.*"])
+    dir_items = listfileio.scan_local_root(ctx, directory_path, ["*.*"])
     for item in dir_items:
         if os.path.isfile(item):
             os.remove(item)
-    # for item in os.listdir(directory_path):
-    #     item_path = os.path.join(directory_path, item)
-    #     if os.path.isfile(item_path):
-    #         os.remove(item_path)
-    #     # else:
-    #     #     os.rmdir(item_path)
     return directory_path
 
-def get_stage_file(ctx: Any, operation: str, id: int) -> str:
+def get_stage_file(ctx: Any, operation: str, id: int, ext: str = "ejs") -> str:
     stage_fldr = os.path.join(ctx.options["stage_fldr"], operation)
+    rnd_str = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
     if not os.path.exists(stage_fldr):
         os.makedirs(stage_fldr)
-    return os.path.join(stage_fldr, f"{id}.ejs")
+    return os.path.join(stage_fldr, f"{id}-{rnd_str}.{ext}")
 
 def stage_create_listing(ctx: Any, src_file: str, indx: int, shop_id: int, listing: Any) -> sync.SyncOperation:
     stage_file = get_stage_file(ctx, "draft", indx)
@@ -58,6 +58,25 @@ def stage_update_listing_properties(ctx: Any, src_file: str, id: int, shop_id: i
     listfileio.save_listing_file(ctx, properties, stage_file)
     return sync.SyncOperation(src_file=src_file, operation="prop-update", params={
         "id": id, "shop_id": shop_id, "src_file": stage_file, "silent": True
+        }).to_dict()
+
+def stage_update_image(ctx: Any, src_file: str, id: int, shop_id: int, image: Any) -> sync.SyncOperation:
+    img_url = image.get("url", "")
+    img_rank = image.get("rank", 1)
+    img_alt = image.get("alt_text", "")
+    base, ext = os.path.splitext(img_url)
+    stage_file = get_stage_file(ctx, "image-upload", id, ext.replace(".", ""))
+    if img_url.startswith("http:") or img_url.startswith("https:"):
+        response = requests.get(img_url)
+        with open(stage_file, "wb") as f:
+            f.write(response.content)
+    else:
+        if os.path.exists(img_url):
+            shutil.copy(img_url, stage_file)
+        else:
+            raise Exception(f"Image file {img_url} does not exist")    
+    return sync.SyncOperation(src_file=src_file, operation="image-upload", params={
+        "id": id, "shop_id": shop_id, "src_file": stage_file, "rank": img_rank, "overwrite": True, "alt_text": img_alt, "silent": True
         }).to_dict()
 
 def plan_listing_sync(ctx: Any, shop_id: int, root: str, fmt_list: List) -> None:
@@ -94,11 +113,19 @@ def plan_listing_sync(ctx: Any, shop_id: int, root: str, fmt_list: List) -> None
                 ctx.vlog(pprint.context_pprint(f"[cyan bold]UPDATED[/cyan bold] - Inventory {id} in file {file} - [green]queued[/green]"))
                 list_ops.append(stage_update_listing_inventory(ctx, file, id, shop_id, inv_data))
                 unchng = False
+            img_data = listing.get("images", None)
+            if img_data and sync.hash_list_data(img_data) != listing_meta.get("images_hash", ""):
+                img_data_chg = [img for img, hash in itertools.zip_longest(img_data, listing_meta["images_item_hashes"]) if img and sync.hash_list_data(img) != hash]
+                if len(img_data_chg) > 0:
+                    for img in img_data_chg:
+                        list_ops.append(stage_update_image(ctx, file, id, shop_id, img))
+                    ctx.vlog(pprint.context_pprint(f"[cyan bold]UPDATED[/cyan bold] - Images {len(img_data_chg)} items {id} in file {file} - [green]queued[/green]"))
+                    unchng = False
             prp_data = listing.get("properties", None)
-            if prp_data and sync.hash_list_data(prp_data) != listing_meta.get("properties_hash", "") and len(listing_meta.get("properties_item_hashes", [])) == len(prp_data):
-                prp_data_chg = [prp for prp, hash in zip(prp_data, listing_meta["properties_item_hashes"]) if sync.hash_list_data(prp) != hash]
+            if prp_data and sync.hash_list_data(prp_data) != listing_meta.get("properties_hash", ""):
+                prp_data_chg = [prp for prp, hash in itertools.zip_longest(prp_data, listing_meta["properties_item_hashes"]) if prp and sync.hash_list_data(prp) != hash]
                 if len(prp_data_chg) > 0:
-                    list_ops.append(stage_update_listing_properties(ctx, file, id, shop_id, prp_data_chg))
+                    list_ops.append(stage_update_listing_properties(ctx, file, id, shop_id, {"properties": prp_data_chg}))
                     ctx.vlog(pprint.context_pprint(f"[cyan bold]UPDATED[/cyan bold] - Properties {len(prp_data_chg)} items {id} in file {file} - [green]queued[/green]"))
                     unchng = False
             if unchng:
@@ -130,7 +157,7 @@ def cli(ctx, shop_id, root_folder, format) -> int:
     ctx.vlog(f"Process SYNC-PLAN shop ID: {shop_id} root folder: {root_folder}")
     try:
         fmt_list = []
-        ctx.options["stage_fldr"] = setup_stage_folder(root_folder)
+        ctx.options["stage_fldr"] = setup_stage_folder(ctx, root_folder)
         if format == "JSON":
             fmt_list = ["*.ejs"]
         elif format == "YAML":

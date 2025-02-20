@@ -37,6 +37,9 @@ def check_listing_for_changes(ctx: Any, listing: Dict) -> bool:
         inv_data = listing.get("inventory", None)
         if inv_data and sync.hash_list_data(inv_data) != listing_meta.get("inventory_hash", ""):
             return True
+        img_data = listing.get("images", None)
+        if img_data and sync.hash_list_data(img_data) != listing_meta.get("images_hash", ""):
+            return True
         prp_data = listing.get("properties", None)
         if prp_data and sync.hash_list_data(prp_data) != listing_meta.get("properties_hash", ""):
             return True
@@ -49,15 +52,14 @@ def pull_listing_sync(ctx: Any, shop_id: int, root: str, fmt_list: List, changed
     success_ctn = 0
     for file in listing_files:
         try:
-            process_listing_file(ctx, shop_id, file, changed)
-            success_ctn += 1
+            success_ctn += process_listing_file(ctx, shop_id, file, changed)
         except Exception as ex:
             ctx.log(f"Error processing listing file {file} - {ex}")
             continue    
     ctx.vlog(pprint.context_pprint(f"Updated [green]{success_ctn}[/green] out of [magenta]{len(listing_files)}[/magenta] listing files from remote."))
     return
 
-def process_listing_file(ctx: Any, shop_id: int, file: str, changed: bool) -> None:
+def process_listing_file(ctx: Any, shop_id: int, file: str, changed: bool) -> int:
     listing = listfileio.load_listing_file(ctx, file)
     if not listing:
         raise Exception(f"Invalid listing file {file}")
@@ -75,12 +77,14 @@ def process_listing_file(ctx: Any, shop_id: int, file: str, changed: bool) -> No
         if list_chg:
             import_listing(ctx, shop_id, id, file)
             ctx.vlog(pprint.context_pprint(f"[green bold]PULLED[/green bold] - Listing ID: {id} in {file} updated from remote."))
+            return 1
         else:
             ctx.vlog(pprint.context_pprint(f"[yellow bold]UNCHANGED[/yellow bold] - Listing ID: {id} in {file} skipped."))
     else:
         import_listing(ctx, shop_id, id, file)
         ctx.vlog(pprint.context_pprint(f"[green bold]PULLED[/green bold] - Listing ID: {id} in {file} updated from remote."))
-    return
+        return 1
+    return 0
 
 @click.command("sync-pull", short_help="Search for local listing files and update from remote listing.")
 @click.option("-s", "--shop-id", required=True, type=click.INT, help="Shop ID for which to retrieve listings.")
