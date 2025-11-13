@@ -70,6 +70,7 @@ def update_src_file_listing_id(ctx: Any, src_file: str, new_id: int) -> None:
 
 def push_listing_sync(ctx: Any, root: str, no_preview: bool, silent: bool) -> None:
     ctx.vlog(f"Push Listing Updates from local plan file staged in: {root}")
+    etsy = ctx.get_etsy("SYNC-PUSH")
     listing_ops = get_operations_from_plan(ctx, root)
     cont_flag = False
     if not no_preview:
@@ -78,7 +79,8 @@ def push_listing_sync(ctx: Any, root: str, no_preview: bool, silent: bool) -> No
         cont_flag = True
     if cont_flag:
         ok_cnt = 0
-        ctx.vlog(f"Pushing Listing Updates from Plan")
+        ures = etsy.get_authenticated_user()
+        ctx.vlog(f"Pushing Listing Updates from Plan Shop: {ures['shop_id']} User: {ures['user_id']}")
         cmd_cache = {}
         list_id_cache = {}
         for op in listing_ops:

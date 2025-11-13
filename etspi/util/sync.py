@@ -23,27 +23,28 @@ class Listing:
         self.properties = properties
         self.meta = ListingMeta(listing_id=id).to_dict()
     
-    def to_dict(self) -> Dict:
+    def to_dict(self, calc_hash = True) -> Dict:
         id = self.meta.get("listing_id", 0)
         meta = ListingMeta(listing_id=id)
-        if self.images:
-            meta.images_hash = hash_list_data(self.images)
-            meta.images_item_hashes = [hash_list_data(img) for img in self.images]
-        if self.inventory:
-            meta.inventory_hash = hash_list_data(self.inventory)
-        if self.properties:
-            meta.properties_hash = hash_list_data(self.properties)
-            meta.properties_item_hashes = [hash_list_data(prp) for prp in self.properties]
-        if self.listing:
-            meta.listing_hash = hash_list_data(self.listing)
+        if calc_hash:
+            if self.images:
+                meta.images_hash = hash_list_data(self.images)
+                meta.images_item_hashes = [hash_list_data(img) for img in self.images]
+            if self.inventory:
+                meta.inventory_hash = hash_list_data(self.inventory)
+            if self.properties:
+                meta.properties_hash = hash_list_data(self.properties)
+                meta.properties_item_hashes = [hash_list_data(prp) for prp in self.properties]
+            if self.listing:
+                meta.listing_hash = hash_list_data(self.listing)
         self.meta = meta.to_dict()
         return { "listing": self.listing, "images": self.images, "inventory": self.inventory, 
                 "properties": self.properties, "meta": self.meta }
 
 class ListingMeta:
-    def __init__(self, listing_id: int = 0, listing_hash: str = None, images_hash: str = None,
-                 images_item_hashes: List = None, inventory_hash: str = None, properties_hash: str = None,
-                 properties_item_hashes: List = None):
+    def __init__(self, listing_id: int = 0, listing_hash: str = "", images_hash: str = "",
+                 images_item_hashes: List = [], inventory_hash: str = "", properties_hash: str = "",
+                 properties_item_hashes: List = []):
         self.listing_id = listing_id
         self.images_hash = images_hash
         self.images_item_hashes = images_item_hashes

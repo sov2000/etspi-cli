@@ -134,7 +134,7 @@ def plan_listing_sync(ctx: Any, shop_id: int, root: str, fmt_list: List) -> None
             ctx.log(f"Error processing listing file {file} - {ex}")
             continue
     new_llist_ctn = sum([1 for o in list_ops if o["operation"] == "draft"])
-    upd_llist_ctn = sum([1 for o in list_ops if o["operation"] in ["listing-update", "listing-update-iv"]])
+    upd_llist_ctn = sum([1 for o in list_ops if o["operation"] in ["listing-update", "listing-update-iv", "prop-update", "image-upload"]])
     ctx.vlog(pprint.context_pprint(f"Found [green]{new_llist_ctn}[/green] new listings and [yellow]{upd_llist_ctn}[/yellow] listing updates."))
     if len(list_ops) > 0:
         stage_file = os.path.join(ctx.options["stage_fldr"], "plan.json")
