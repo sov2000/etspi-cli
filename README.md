@@ -396,6 +396,142 @@ To update a property for listing, you will need a JSON file in the correct updat
 etspi prop-update -i 1800000081 -s 12345678 -pi 98765432 -f listing_property_update.json
 ```
 
+## Sync Commands:
+
+The sync commands provide a comprehensive workflow for managing local listing files and synchronizing them with your Etsy shop. These commands support both JSON (`.ejs`) and YAML (`.eyml`) file formats.
+
+### sync-import
+
+Import listings from Etsy to local files for future sync operations. This command retrieves listing data including images, inventory, and properties, and saves them in a format suitable for editing and syncing.
+
+Import a specific listing by ID:
+
+```bash
+etspi sync-import -s 12345678 -i 1800000081 -R ./my_listings
+```
+
+Import all active listings for a shop:
+
+```bash
+etspi sync-import -s 12345678 -st Active -R ./my_listings
+```
+
+Import all listings in a specific section:
+
+```bash
+etspi sync-import -s 12345678 -si 87654321 -R ./my_listings
+```
+
+Import listings as drafts (for creating new listings from existing ones):
+
+```bash
+etspi sync-import -s 12345678 -i 1800000081 --format-draft -R ./my_listings
+```
+
+Import listings in YAML format:
+
+```bash
+etspi sync-import -s 12345678 -i 1800000081 -F YAML -R ./my_listings
+```
+
+### sync-pull
+
+Update local listing files with the latest data from Etsy. This command scans your local folder for listing files and pulls the latest information from Etsy to keep your local copies in sync with the remote shop.
+
+Pull updates for all listing files in the root folder:
+
+```bash
+etspi sync-pull -s 12345678 -R ./my_listings
+```
+
+Pull updates only for files that have local changes:
+
+```bash
+etspi sync-pull -s 12345678 -R ./my_listings -C
+```
+
+Pull updates for JSON format files only:
+
+```bash
+etspi sync-pull -s 12345678 -R ./my_listings -F JSON
+```
+
+Pull updates for YAML format files only:
+
+```bash
+etspi sync-pull -s 12345678 -R ./my_listings -F YAML
+```
+
+### sync-plan
+
+Scan local listing files for changes and create a plan for updating Etsy listings. This command detects changes in listing data, inventory, images, and properties, then generates a plan file that can be reviewed before pushing changes.
+
+Create a plan for all listing files in the root folder:
+
+```bash
+etspi sync-plan -s 12345678 -R ./my_listings
+```
+
+Create a plan for JSON format files only:
+
+```bash
+etspi sync-plan -s 12345678 -R ./my_listings -F JSON
+```
+
+Create a plan for YAML format files only:
+
+```bash
+etspi sync-plan -s 12345678 -R ./my_listings -F YAML
+```
+
+### sync-push
+
+Execute the plan created by `sync-plan` to push local changes to Etsy. This command shows a preview of all operations and requires confirmation before proceeding (unless suppressed with the `-P` flag).
+
+Push changes with preview and confirmation:
+
+```bash
+etspi sync-push -R ./my_listings
+```
+
+Push changes without preview (immediate execution):
+
+```bash
+etspi sync-push -R ./my_listings -P
+```
+
+Push changes silently (suppress console output):
+
+```bash
+etspi sync-push -R ./my_listings -S
+```
+
+### Sync Workflow Example
+
+Here's a typical workflow for managing listings with sync commands:
+
+1. **Import listings from Etsy:**
+   ```bash
+   etspi sync-import -s 12345678 -st Active -R ./my_listings
+   ```
+
+2. **Edit the local listing files** (`.ejs` or `.eyml`) with your preferred text editor.
+
+3. **Create a plan to see what will change:**
+   ```bash
+   etspi sync-plan -s 12345678 -R ./my_listings
+   ```
+
+4. **Review the plan and push changes:**
+   ```bash
+   etspi sync-push -R ./my_listings
+   ```
+
+5. **Later, pull updates from Etsy to sync any remote changes:**
+   ```bash
+   etspi sync-pull -s 12345678 -R ./my_listings
+   ```
+
 ## Note on STDOUT redirects
 
 Etspi console output uses `rich` library `print` which will color code and format JSON for more esthetic and readable output. When using Etspi `--out` you get original formatted JSON which is what you want for subsequent commands and API calls. If you have a need to pipe or redirect Etspi output to a different console app or file, you may want this original JSON and not pretty formatted. In that case, consider using `--out` to STDOUT `-` with `-S` and apply your pipe or redirect this way.
