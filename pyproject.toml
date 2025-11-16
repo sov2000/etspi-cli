@@ -40,9 +40,12 @@ oauthlib = "^3.2.2"
 requests = "^2.32.3"
 requests-oauthlib = "^2.0.0"
 urllib3 = "^2.2.3"
+mcp = "^1.1.2"
+pydantic = "^2.10.3"
 
 [tool.poetry.scripts]
 etspi = 'etspi.cli:cli'
+etspi-mcp = 'etspi.mcp.server:main'
 
 [build-system]
 requires = ["poetry-core"]
